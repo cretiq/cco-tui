@@ -9,189 +9,189 @@
 
 [English](README.md) | [简体中文](README.zh-CN.md) | [繁體中文](README.zh-TW.md) | [日本語](README.ja.md) | [한국어](README.ko.md) | [Español](README.es.md) | [Bahasa Indonesia](README.id.md) | [Italiano](README.it.md) | [Português](README.pt-BR.md) | [Türkçe](README.tr.md) | Tiếng Việt | [ไทย](README.th.md)
 
-**Tổ chức toàn bộ bộ nhớ, kỹ năng, MCP server và hook của Claude Code — xem theo cấu trúc phân cấp phạm vi, di chuyển giữa các phạm vi bằng kéo và thả.**
+**Sắp xếp toàn bộ memory, skill, MCP server và hook của Claude Code; xem theo cây scope, di chuyển giữa các scope bằng drag-and-drop.**
 
 ![Claude Code Organizer Demo](docs/demo.gif)
 
-## Vấn đề
+## vấn đề
 
-Claude Code âm thầm tạo ra bộ nhớ, kỹ năng và cấu hình MCP mỗi khi bạn làm việc — và lưu chúng vào bất kỳ phạm vi nào khớp với thư mục hiện tại của bạn. Một tùy chọn bạn muốn áp dụng ở mọi nơi? Lại bị kẹt trong một dự án duy nhất. Một kỹ năng triển khai chỉ thuộc về một repo? Lại bị rò rỉ vào global, làm ô nhiễm tất cả các dự án khác.
+Claude Code âm thầm tạo memory, skill và config MCP mỗi khi bạn làm việc, rồi đẩy chúng vào scope nào khớp với thư mục hiện tại. Một preference lẽ ra áp dụng ở mọi nơi? Bị kẹt trong một Project. Một skill deploy chỉ dành cho một repo? Lại rơi vào Global, làm nhiễu mọi project khác.
 
-**Đây không chỉ là vấn đề lộn xộn — nó còn làm giảm hiệu suất AI của bạn.** Mỗi phiên làm việc, Claude tải toàn bộ cấu hình từ phạm vi hiện tại cộng với mọi thứ kế thừa từ các phạm vi cha vào cửa sổ ngữ cảnh. Các mục sai phạm vi = lãng phí token, ngữ cảnh bị ô nhiễm và độ chính xác thấp hơn. Một kỹ năng Python pipeline nằm trong global lại được tải vào phiên làm việc React frontend của bạn. Các mục MCP trùng lặp khởi tạo cùng một server hai lần. Bộ nhớ lỗi thời mâu thuẫn với các hướng dẫn hiện tại của bạn.
+**Đây không chỉ là chuyện bừa bộn, nó còn làm AI của bạn kém chính xác hơn.** Mỗi session, Claude nạp toàn bộ config ở scope hiện tại cùng mọi thứ kế thừa từ scope cha vào context window. Những item nằm sai scope = tốn token, bẩn context, giảm độ chính xác. Một skill cho Python pipeline nằm ở Global sẽ bị nạp cả vào session React frontend. MCP entry trùng nhau có thể khởi tạo cùng một server hai lần. Memory cũ thì mâu thuẫn với chỉ dẫn hiện tại của bạn.
 
-### "Chỉ cần nhờ Claude sửa là xong"
+### "cứ bảo Claude tự sửa đi"
 
-Bạn có thể nhờ Claude Code tự quản lý cấu hình của nó. Nhưng bạn sẽ phải đi đi lại lại — `ls` từng thư mục, `cat` từng tệp, cố gắng ghép lại bức tranh toàn cảnh từ các mảnh kết quả văn bản. **Không có lệnh nào hiển thị toàn bộ cây** qua tất cả các phạm vi, tất cả các mục, tất cả sự kế thừa cùng một lúc.
+Bạn vẫn có thể bảo Claude Code tự dọn config cho nó. Nhưng rồi sẽ lại phải lần từng bước: `ls` từng thư mục, `cat` từng file, ghép bức tranh tổng thể từ một loạt output rời rạc. **Không có lệnh nào cho bạn thấy toàn bộ cây** của mọi scope, mọi item và toàn bộ quan hệ kế thừa trong cùng một màn hình.
 
-### Giải pháp: một bảng điều khiển trực quan
+### cách giải quyết: dashboard trực quan
 
 ```bash
 npx @mcpware/claude-code-organizer
 ```
 
-Một lệnh duy nhất. Xem mọi thứ Claude đã lưu — được tổ chức theo cấu trúc phân cấp phạm vi. **Kéo và thả các mục giữa các phạm vi.** Xóa bộ nhớ lỗi thời. Tìm các mục trùng lặp. Kiểm soát những gì thực sự ảnh hưởng đến hành vi của Claude.
+Chỉ một lệnh. Bạn sẽ thấy toàn bộ những gì Claude đang lưu, sắp theo cây scope. **Kéo item giữa các scope.** Xóa memory cũ. Tìm item trùng. Lấy lại quyền kiểm soát những gì thực sự ảnh hưởng đến cách Claude hoạt động.
 
-### Ví dụ: Project → Global
+### ví dụ: Project → Global
 
-Bạn đã nói với Claude "Tôi thích TypeScript + ESM" khi đang làm việc trong một dự án, nhưng tùy chọn đó áp dụng ở mọi nơi. Mở bảng điều khiển, kéo bộ nhớ đó từ Project sang Global. **Xong. Chỉ một lần kéo.**
+Bạn từng nói với Claude "I prefer TypeScript + ESM" khi đang đứng trong một project, nhưng preference đó áp dụng ở mọi nơi. Mở dashboard, kéo memory đó từ Project sang Global. **Xong. Một cú kéo.**
 
-### Ví dụ: Global → Project
+### ví dụ: Global → Project
 
-Một kỹ năng triển khai nằm trong global chỉ có nghĩa với một repo. Kéo nó vào phạm vi Project đó — các dự án khác sẽ không thấy nó nữa.
+Một skill deploy đang nằm ở Global nhưng thực ra chỉ có ý nghĩa với một repo. Kéo nó vào scope Project tương ứng, các project khác sẽ không còn thấy nó nữa.
 
-### Ví dụ: Xóa bộ nhớ lỗi thời
+### ví dụ: xóa memory cũ
 
-Claude tự động tạo bộ nhớ từ những điều bạn nói tình cờ, hoặc những thứ nó *nghĩ* bạn muốn ghi nhớ. Một tuần sau chúng đã lỗi thời nhưng vẫn được tải vào mỗi phiên làm việc. Duyệt qua, đọc, xóa. **Bạn kiểm soát những gì Claude nghĩ nó biết về bạn.**
+Claude có thể tự tạo memory từ những câu bạn nói vu vơ, hoặc từ những gì nó *nghĩ* là nên nhớ. Một tuần sau, chúng không còn liên quan nhưng vẫn bị nạp vào mọi session. Mở ra, đọc, xóa. **Bạn quyết định Claude nên "biết" gì về mình.**
 
 ---
 
-## Tính năng
+## tính năng
 
-- **Cấu trúc phân cấp theo phạm vi** — Xem tất cả các mục được tổ chức theo dạng Global > Workspace > Project, với các chỉ báo kế thừa
-- **Kéo và thả** — Di chuyển bộ nhớ giữa các phạm vi, kỹ năng giữa global và từng repo, MCP server giữa các cấu hình
-- **Xác nhận di chuyển** — Mỗi lần di chuyển hiển thị modal xác nhận trước khi thay đổi bất kỳ tệp nào
-- **An toàn theo loại** — Bộ nhớ chỉ có thể di chuyển đến thư mục bộ nhớ, kỹ năng đến thư mục kỹ năng, MCP đến cấu hình MCP
-- **Tìm kiếm và lọc** — Tìm kiếm ngay lập tức qua tất cả các mục, lọc theo danh mục (Memory, Skills, MCP, Config, Hooks, Plugins, Plans)
-- **Bảng chi tiết** — Nhấp vào bất kỳ mục nào để xem đầy đủ metadata, mô tả, đường dẫn tệp và mở trong VS Code
-- **Quét toàn bộ từng dự án** — Mỗi phạm vi hiển thị tất cả loại mục: bộ nhớ, kỹ năng, MCP server, cấu hình, hook và kế hoạch
-- **Di chuyển tệp thực sự** — Thực sự di chuyển tệp trong `~/.claude/`, không chỉ là công cụ xem
-- **45 bài kiểm tra E2E** — Bộ kiểm tra Playwright với xác minh filesystem thực sau mỗi thao tác
+- **Nhìn theo cây scope**: Thấy toàn bộ item được sắp theo Global > Workspace > Project, kèm dấu hiệu kế thừa
+- **Drag-and-drop**: Di chuyển memory giữa các scope, skill giữa Global và từng repo, MCP server giữa các config
+- **Xác nhận trước khi di chuyển**: Mỗi lần move đều hiện modal xác nhận trước khi đụng vào file
+- **An toàn theo từng loại item**: Memory chỉ có thể move vào thư mục memory, skill vào thư mục skill, MCP vào config MCP
+- **Tìm kiếm và lọc**: Tìm tức thì trên toàn bộ item, lọc theo nhóm (Memory, Skills, MCP, Config, Hooks, Plugins, Plans)
+- **Panel chi tiết**: Bấm vào bất kỳ item nào để xem đầy đủ metadata, mô tả, file path và mở trong VS Code
+- **Quét đầy đủ theo từng project**: Mỗi scope đều hiển thị đủ mọi loại item: memory, skill, MCP server, config, hook và plan
+- **Di chuyển file thật**: Tool thực sự move file trong `~/.claude/`, không phải chỉ để xem
+- **45 bài test E2E**: Bộ test Playwright có xác minh filesystem thật sau mỗi thao tác
 
-## Tại sao cần bảng điều khiển trực quan?
+## vì sao cần dashboard trực quan?
 
-Claude Code đã có thể liệt kê và di chuyển tệp qua CLI — nhưng bạn sẽ mắc kẹt với việc hỏi đi hỏi lại về cấu hình của chính mình. Bảng điều khiển cho bạn **khả năng nhìn tổng thể chỉ trong một cái nhìn:**
+Claude Code vốn đã có thể liệt kê và di chuyển file qua CLI, nhưng dùng cách đó thì bạn sẽ phải dò config của chính mình theo kiểu hỏi tới hỏi lui từng chút một. Dashboard cho bạn **cái nhìn toàn cảnh chỉ trong một màn hình:**
 
-| Những gì bạn cần | Nhờ Claude | Bảng điều khiển trực quan |
+| Việc bạn cần | Nhờ Claude | Dashboard trực quan |
 |---------------|:-----------:|:----------------:|
-| **Xem tất cả cùng lúc** qua tất cả các phạm vi | `ls` từng thư mục một, ghép lại | Cây phạm vi, một cái nhìn |
-| **Phạm vi hiện tại của tôi có gì?** | Chạy nhiều lệnh, hy vọng bạn lấy đủ | Mở project → xem toàn bộ chuỗi kế thừa |
-| **Di chuyển mục giữa các phạm vi** | Tìm đường dẫn mã hóa, `mv` thủ công | Kéo thả với xác nhận |
-| **Đọc nội dung cấu hình** | `cat` từng tệp một | Nhấp → bảng bên |
-| **Tìm trùng lặp / mục lỗi thời** | `grep` qua các thư mục phức tạp | Tìm kiếm + lọc theo danh mục |
-| **Dọn dẹp bộ nhớ không dùng** | Tìm ra tệp nào cần xóa | Duyệt, đọc, xóa tại chỗ |
+| **Xem tất cả cùng lúc** trên mọi scope | `ls` từng thư mục rồi tự ghép lại | Cây scope, nhìn là thấy |
+| **Project hiện tại đang nạp gì?** | Chạy nhiều lệnh, hy vọng không sót | Mở project → thấy toàn bộ chuỗi kế thừa |
+| **Move item giữa các scope** | Lần mò path đã encode, `mv` thủ công | Drag-and-drop có xác nhận |
+| **Đọc nội dung config** | `cat` từng file một | Bấm → panel bên |
+| **Tìm item trùng / item cũ** | `grep` trong các thư mục khó đọc | Search + filter theo category |
+| **Dọn memory không còn dùng** | Tự suy ra file nào nên xóa | Duyệt, đọc, xóa ngay tại chỗ |
 
-## Bắt đầu nhanh
+## bắt đầu nhanh
 
-### Tùy chọn 1: npx (không cần cài đặt)
+### tùy chọn 1: npx (không cần cài đặt)
 
 ```bash
 npx @mcpware/claude-code-organizer
 ```
 
-### Tùy chọn 2: Cài đặt toàn cục
+### tùy chọn 2: cài đặt global
 
 ```bash
 npm install -g @mcpware/claude-code-organizer
 claude-code-organizer
 ```
 
-### Tùy chọn 3: Nhờ Claude
+### tùy chọn 3: nhờ Claude
 
-Dán nội dung này vào Claude Code:
+Dán đoạn này vào Claude Code:
 
-> Chạy `npx @mcpware/claude-code-organizer` — đây là bảng điều khiển để quản lý cài đặt Claude Code. Cho tôi biết URL khi nó sẵn sàng.
+> Chạy `npx @mcpware/claude-code-organizer` — đây là một dashboard để quản lý thiết lập của Claude Code. Khi sẵn sàng thì báo cho tôi URL.
 
-Mở bảng điều khiển tại `http://localhost:3847`. Hoạt động với thư mục `~/.claude/` thực của bạn.
+Dashboard sẽ mở tại `http://localhost:3847`. Dùng trực tiếp với thư mục `~/.claude/` thật của bạn.
 
-## Những gì nó quản lý
+## công cụ này quản lý gì
 
 | Loại | Xem | Di chuyển | Quét tại | Tại sao bị khóa? |
 |------|:----:|:----:|:----------:|-------------|
-| Memories (feedback, user, project, reference) | Có | Có | Global + Project | — |
-| Skills | Có | Có | Global + Project | — |
-| MCP Servers | Có | Có | Global + Project | — |
-| Config (CLAUDE.md, settings.json) | Có | Khóa | Global + Project | Cài đặt hệ thống — di chuyển có thể làm hỏng cấu hình |
-| Hooks | Có | Khóa | Global + Project | Phụ thuộc vào ngữ cảnh settings — lỗi im lặng nếu di chuyển |
-| Plans | Có | Có | Global + Project | — |
-| Plugins | Có | Khóa | Chỉ Global | Bộ nhớ cache do Claude Code quản lý |
+| Memories (feedback, user, project, reference) | Có | Có | Global + Project | - |
+| Skills | Có | Có | Global + Project | - |
+| MCP Servers | Có | Có | Global + Project | - |
+| Config (CLAUDE.md, settings.json) | Có | Khóa | Global + Project | Thiết lập hệ thống, move nhầm có thể làm hỏng config |
+| Hooks | Có | Khóa | Global + Project | Phụ thuộc vào context của settings, move sang chỗ khác có thể lỗi âm thầm |
+| Plans | Có | Có | Global + Project | - |
+| Plugins | Có | Khóa | Chỉ Global | Cache do Claude Code quản lý |
 
-## Cấu trúc phân cấp phạm vi
+## cây scope
 
+```bash
+Global                       <- applies everywhere
+  Company (workspace)        <- applies to all sub-projects
+    CompanyRepo1             <- project-specific
+    CompanyRepo2             <- project-specific
+  SideProjects (project)     <- independent project
+  Documents (project)        <- independent project
 ```
-Global                       <- áp dụng ở mọi nơi
-  Company (workspace)        <- áp dụng cho tất cả dự án con
-    CompanyRepo1             <- dành riêng cho dự án
-    CompanyRepo2             <- dành riêng cho dự án
-  SideProjects (project)     <- dự án độc lập
-  Documents (project)        <- dự án độc lập
-```
 
-Các phạm vi con kế thừa bộ nhớ, kỹ năng và MCP server từ phạm vi cha.
+Scope con sẽ kế thừa memory, skill và MCP server từ scope cha.
 
-## Cách hoạt động
+## cách hoạt động
 
-1. **Quét** `~/.claude/` — phát hiện tất cả dự án, bộ nhớ, kỹ năng, MCP server, hook, plugin, kế hoạch
-2. **Phân giải cấu trúc phân cấp phạm vi** — xác định quan hệ cha-con từ đường dẫn filesystem
-3. **Hiển thị bảng điều khiển** — tiêu đề phạm vi > thanh danh mục > hàng mục, với thụt lề phù hợp
-4. **Xử lý di chuyển** — khi bạn kéo hoặc nhấp "Move to...", thực sự di chuyển tệp trên đĩa với các kiểm tra an toàn
+1. **Quét** `~/.claude/` — phát hiện toàn bộ project, memory, skill, MCP server, hook, plugin và plan
+2. **Xác định cây scope** — suy ra quan hệ cha-con từ các path trong filesystem
+3. **Render dashboard** — header scope > thanh category > từng dòng item, với độ thụt đúng
+4. **Xử lý thao tác move** — khi bạn kéo hoặc bấm "Move to...", tool sẽ thực sự move file trên đĩa kèm các kiểm tra an toàn
 
-## So sánh
+## so sánh
 
-Chúng tôi đã xem xét mọi công cụ cấu hình Claude Code có thể tìm thấy. Không có công cụ nào cung cấp cấu trúc phân cấp phạm vi trực quan + di chuyển kéo thả xuyên phạm vi trong một bảng điều khiển độc lập.
+Chúng tôi đã xem qua mọi tool cấu hình Claude Code mà tìm được. Không có tool nào vừa cho cây scope trực quan vừa hỗ trợ drag-and-drop giữa các scope trong một dashboard chạy độc lập.
 
-| Những gì tôi cần | Desktop app (600+⭐) | VS Code extension | Full-stack web app | **Claude Code Organizer** |
+| Điều tôi cần | Desktop app (600+⭐) | VS Code extension | Full-stack web app | **Claude Code Organizer** |
 |---------|:---:|:---:|:---:|:---:|
-| Cây phân cấp phạm vi | Không | Có | Một phần | **Có** |
-| Di chuyển kéo thả | Không | Không | Không | **Có** |
-| Di chuyển xuyên phạm vi | Không | Một nhấp | Không | **Có** |
-| Xóa mục lỗi thời | Không | Không | Không | **Có** |
-| Công cụ MCP | Không | Không | Có | **Có** |
-| Không phụ thuộc | Không (Tauri) | Không (VS Code) | Không (React+Rust+SQLite) | **Có** |
-| Độc lập (không cần IDE) | Có | Không | Có | **Có** |
+| Cây scope | Không | Có | Một phần | **Có** |
+| Move bằng drag-and-drop | Không | Không | Không | **Có** |
+| Move giữa các scope | Không | One-click | Không | **Có** |
+| Xóa item cũ | Không | Không | Không | **Có** |
+| Tool MCP | Không | Không | Có | **Có** |
+| Zero dependencies | Không (Tauri) | Không (VS Code) | Không (React+Rust+SQLite) | **Có** |
+| Chạy độc lập (không cần IDE) | Có | Không | Có | **Có** |
 
-## Hỗ trợ nền tảng
+## hỗ trợ nền tảng
 
 | Nền tảng | Trạng thái |
 |----------|:------:|
 | Ubuntu / Linux | Được hỗ trợ |
-| macOS (Intel + Apple Silicon) | Được hỗ trợ (cộng đồng kiểm tra trên Sequoia M3) |
+| macOS (Intel + Apple Silicon) | Được hỗ trợ (community-tested trên Sequoia M3) |
 | Windows | Chưa hỗ trợ |
-| WSL | Có thể hoạt động (chưa kiểm tra) |
+| WSL | Có thể chạy được (chưa test) |
 
-## Cấu trúc dự án
+## cấu trúc project
 
-```
+```bash
 src/
-  scanner.mjs       # Quét ~/.claude/ — dữ liệu thuần túy, không có tác dụng phụ
-  mover.mjs         # Di chuyển tệp giữa các phạm vi — kiểm tra an toàn + rollback
-  server.mjs        # HTTP server — chỉ định tuyến, không có logic
+  scanner.mjs       # Scans ~/.claude/ — pure data, no side effects
+  mover.mjs         # Moves files between scopes — safety checks + rollback
+  server.mjs        # HTTP server — routes only, no logic
   ui/
-    index.html       # Cấu trúc HTML
-    style.css        # Toàn bộ kiểu dáng (chỉnh sửa thoải mái, sẽ không làm hỏng logic)
-    app.js           # Hiển thị frontend + SortableJS + tương tác
+    index.html       # HTML structure
+    style.css        # All styling (edit freely, won't break logic)
+    app.js           # Frontend rendering + SortableJS + interactions
 bin/
-  cli.mjs            # Điểm vào
+  cli.mjs            # Entry point
 ```
 
-Frontend và backend được tách biệt hoàn toàn. Chỉnh sửa các tệp trong `src/ui/` để thay đổi giao diện mà không cần động đến bất kỳ logic nào.
+Frontend và backend tách riêng hoàn toàn. Bạn có thể sửa các file trong `src/ui/` để đổi giao diện mà không phải chạm vào logic.
 
 ## API
 
-Bảng điều khiển được hỗ trợ bởi một REST API:
+Phía sau dashboard là một REST API:
 
 | Endpoint | Method | Mô tả |
 |----------|--------|-------------|
-| `/api/scan` | GET | Quét tất cả tùy chỉnh, trả về phạm vi + mục + số lượng |
-| `/api/move` | POST | Di chuyển một mục sang phạm vi khác (hỗ trợ phân biệt danh mục/tên) |
-| `/api/delete` | POST | Xóa vĩnh viễn một mục |
-| `/api/restore` | POST | Khôi phục tệp đã xóa (để hoàn tác) |
-| `/api/restore-mcp` | POST | Khôi phục mục MCP server đã xóa |
-| `/api/destinations` | GET | Lấy các đích di chuyển hợp lệ cho một mục |
-| `/api/file-content` | GET | Đọc nội dung tệp cho bảng chi tiết |
+| `/api/scan` | GET | Quét toàn bộ tùy chỉnh, trả về scopes + items + counts |
+| `/api/move` | POST | Move một item sang scope khác (hỗ trợ phân biệt theo category/name) |
+| `/api/delete` | POST | Xóa vĩnh viễn một item |
+| `/api/restore` | POST | Khôi phục file đã xóa (để undo) |
+| `/api/restore-mcp` | POST | Khôi phục một MCP server entry đã xóa |
+| `/api/destinations` | GET | Lấy danh sách đích move hợp lệ cho một item |
+| `/api/file-content` | GET | Đọc nội dung file cho panel chi tiết |
 
-## Giấy phép
+## giấy phép
 
 MIT
 
-## Thêm từ @mcpware
+## thêm từ @mcpware
 
 | Dự án | Chức năng | Cài đặt |
 |---------|---|---|
-| **[Instagram MCP](https://github.com/mcpware/instagram-mcp)** | 23 công cụ Instagram Graph API — bài đăng, bình luận, DM, story, phân tích | `npx @mcpware/instagram-mcp` |
-| **[UI Annotator](https://github.com/mcpware/ui-annotator-mcp)** | Nhãn hover trên bất kỳ trang web nào — AI tham chiếu các phần tử theo tên | `npx @mcpware/ui-annotator` |
-| **[Pagecast](https://github.com/mcpware/pagecast)** | Ghi lại phiên trình duyệt dưới dạng GIF hoặc video qua MCP | `npx @mcpware/pagecast` |
-| **[LogoLoom](https://github.com/mcpware/logoloom)** | Thiết kế logo bằng AI → SVG → xuất bộ thương hiệu đầy đủ | `npx @mcpware/logoloom` |
+| **[Instagram MCP](https://github.com/mcpware/instagram-mcp)** | 23 tool Instagram Graph API — bài đăng, bình luận, DM, story, analytics | `npx @mcpware/instagram-mcp` |
+| **[UI Annotator](https://github.com/mcpware/ui-annotator-mcp)** | Gắn nhãn hover trên mọi trang web để AI gọi phần tử theo tên | `npx @mcpware/ui-annotator` |
+| **[Pagecast](https://github.com/mcpware/pagecast)** | Ghi lại phiên duyệt web thành GIF hoặc video qua MCP | `npx @mcpware/pagecast` |
+| **[LogoLoom](https://github.com/mcpware/logoloom)** | Thiết kế logo bằng AI → SVG → xuất trọn bộ nhận diện thương hiệu | `npx @mcpware/logoloom` |
 
-## Tác giả
+## tác giả
 
-[ithiria894](https://github.com/ithiria894) — Xây dựng công cụ cho hệ sinh thái Claude Code.
+[ithiria894](https://github.com/ithiria894) - Xây công cụ cho hệ sinh thái Claude Code.

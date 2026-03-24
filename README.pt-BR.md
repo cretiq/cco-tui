@@ -9,161 +9,161 @@
 
 [English](README.md) | [简体中文](README.zh-CN.md) | [繁體中文](README.zh-TW.md) | [日本語](README.ja.md) | [한국어](README.ko.md) | [Español](README.es.md) | [Bahasa Indonesia](README.id.md) | [Italiano](README.it.md) | Português | [Türkçe](README.tr.md) | [Tiếng Việt](README.vi.md) | [ไทย](README.th.md)
 
-**Organize todas as suas memórias, skills, servidores MCP e hooks do Claude Code — visualize pela hierarquia de escopos, mova entre escopos com arrastar e soltar.**
+**Organize todas as memories, skills, servidores MCP e hooks do Claude Code — veja tudo pela hierarquia de scopes e mova itens entre scopes com drag-and-drop.**
 
 ![Claude Code Organizer Demo](docs/demo.gif)
 
-## O Problema
+## o problema
 
-O Claude Code cria memórias, skills e configurações MCP silenciosamente toda vez que você trabalha — e as despeja no escopo que corresponde ao seu diretório atual. Uma preferência que você queria em todo lugar? Presa em um único projeto. Uma skill de deploy que pertence a um repositório específico? Vazou para o global, contaminando todos os outros projetos.
+O Claude Code cria memories, skills e configs de MCP em silêncio toda vez que você trabalha — e joga tudo no scope que corresponde ao diretório atual. Uma preferência que você queria em todo lugar? Ficou presa em um único projeto. Uma skill de deploy que só faz sentido para um repo específico? Vazou para `Global` e passou a contaminar todos os outros projetos.
 
-**Isso não é apenas bagunça — prejudica o desempenho da sua IA.** A cada sessão, o Claude carrega todas as configurações do escopo atual mais tudo herdado dos escopos pai na sua janela de contexto. Itens no escopo errado = tokens desperdiçados, contexto poluído e menor precisão. Uma skill de pipeline Python no global é carregada na sua sessão de frontend React. Entradas MCP duplicadas inicializam o mesmo servidor duas vezes. Memórias desatualizadas contradizem suas instruções atuais.
+**Isso não é só bagunça — isso piora a performance da sua IA.** Em cada sessão, o Claude carrega para a janela de contexto todas as configs do scope atual mais tudo o que é herdado dos scopes pai. Itens no scope errado = tokens desperdiçados, contexto poluído e menos precisão. Uma skill de pipeline em Python parada no `Global` vai ser carregada na sua sessão de frontend React. Entradas MCP duplicadas inicializam o mesmo servidor duas vezes. Memories antigas passam a contradizer as instruções atuais.
 
-### "Só peça pro Claude corrigir"
+### "é só pedir para o Claude arrumar"
 
-Você poderia pedir ao Claude Code para gerenciar suas próprias configurações. Mas vai ficar indo e voltando — `ls` em um diretório de cada vez, `cat` em cada arquivo, tentando montar o quadro geral a partir de fragmentos de texto. **Não existe nenhum comando que mostre a árvore inteira** entre todos os escopos, todos os itens, toda a herança de uma vez.
+Você até pode pedir ao Claude Code que gerencie a própria config. Mas vai ser um vai e volta: `ls` em um diretório, `cat` em cada arquivo, e a tentativa de montar o quadro completo a partir de fragmentos de texto. **Não existe um comando que mostre a árvore inteira** com todos os scopes, todos os itens e toda a herança de uma vez.
 
-### A solução: um dashboard visual
+### a solução: um dashboard visual
 
 ```bash
 npx @mcpware/claude-code-organizer
 ```
 
-Um comando. Veja tudo que o Claude armazenou — organizado por hierarquia de escopos. **Arraste itens entre escopos.** Delete memórias desatualizadas. Encontre duplicatas. Assuma o controle do que realmente influencia o comportamento do Claude.
+Um comando. Você vê tudo o que o Claude guardou, organizado pela hierarquia de scopes. **Arraste itens entre scopes.** Apague memories antigas. Encontre duplicatas. Retome o controle sobre o que realmente influencia o comportamento do Claude.
 
-### Exemplo: Project → Global
+### exemplo: `Project` → `Global`
 
-Você disse ao Claude "Prefiro TypeScript + ESM" dentro de um projeto, mas essa preferência se aplica em qualquer lugar. Abra o dashboard, arraste essa memória de Project para Global. **Pronto. Um arraste.**
+Você disse ao Claude "I prefer TypeScript + ESM" enquanto estava dentro de um projeto, mas essa preferência vale em todo lugar. Abra o dashboard, arraste essa memory de `Project` para `Global`. **Pronto. Um arraste só.**
 
-### Exemplo: Global → Project
+### exemplo: `Global` → `Project`
 
-Uma skill de deploy no global só faz sentido para um repositório. Arraste-a para o escopo daquele Project — os outros projetos não vão mais enxergá-la.
+Uma skill de deploy no `Global` só faz sentido para um repo. Arraste para aquele scope `Project` — os outros projetos deixam de vê-la.
 
-### Exemplo: Deletar memórias desatualizadas
+### exemplo: apagar memories antigas
 
-O Claude cria memórias automaticamente a partir de coisas que você disse por acaso, ou coisas que ele *achou* que você queria lembrar. Uma semana depois elas são irrelevantes, mas ainda são carregadas em toda sessão. Navegue, leia, delete. **Você controla o que o Claude acha que sabe sobre você.**
+O Claude cria memories automaticamente a partir de coisas que você comentou por acaso, ou do que ele *achou* que deveria lembrar. Uma semana depois, elas já não servem mais, mas continuam sendo carregadas em toda sessão. Navegue, leia, apague. **Você decide o que o Claude acha que sabe sobre você.**
 
 ---
 
-## Funcionalidades
+## funcionalidades
 
-- **Hierarquia por escopo** — Veja todos os itens organizados como Global > Workspace > Project, com indicadores de herança
-- **Arrastar e soltar** — Mova memórias entre escopos, skills entre global e por repositório, servidores MCP entre configurações
-- **Confirmação de movimentação** — Cada movimentação exibe um modal de confirmação antes de tocar em qualquer arquivo
-- **Segurança por tipo** — Memórias só podem ser movidas para pastas de memória, skills para pastas de skill, MCP para configurações MCP
-- **Busca e filtro** — Pesquise instantaneamente em todos os itens, filtre por categoria (Memory, Skills, MCP, Config, Hooks, Plugins, Plans)
+- **Hierarquia por scope** — Veja todos os itens organizados como `Global` > `Workspace` > `Project`, com indicadores de herança
+- **Drag-and-drop** — Mova memories entre scopes, skills entre `Global` e scopes por repo, servidores MCP entre configs
+- **Confirmação de move** — Todo move abre um modal de confirmação antes de tocar em qualquer arquivo
+- **Segurança por tipo** — Memories só podem ir para pastas de memory, skills para pastas de skill, MCP para configs de MCP
+- **Busca e filtro** — Pesquise instantaneamente em todos os itens e filtre por categoria (`Memory`, `Skills`, `MCP`, `Config`, `Hooks`, `Plugins`, `Plans`)
 - **Painel de detalhes** — Clique em qualquer item para ver metadados completos, descrição, caminho do arquivo e abrir no VS Code
-- **Varredura completa por projeto** — Cada escopo mostra todos os tipos de itens: memórias, skills, servidores MCP, configurações, hooks e planos
-- **Movimentação real de arquivos** — Realmente move arquivos em `~/.claude/`, não é apenas um visualizador
-- **45 testes E2E** — Suite de testes Playwright com verificação real do sistema de arquivos após cada operação
+- **Scan completo por projeto** — Cada scope mostra todos os tipos de item: memories, `Skills`, servidores MCP, `Config`, `Hooks` e `Plans`
+- **Move real de arquivos** — Move de verdade arquivos em `~/.claude/`; não é só um viewer
+- **45 testes E2E** — Suite de testes Playwright com verificação real de filesystem depois de cada operação
 
-## Por Que um Dashboard Visual?
+## por que um dashboard visual?
 
-O Claude Code já consegue listar e mover arquivos via CLI — mas você fica jogando 20 perguntas com suas próprias configurações. O dashboard oferece **visibilidade total em um único olhar:**
+O Claude Code já consegue listar e mover arquivos via CLI — mas, na prática, você fica num jogo de adivinhação com a própria config. O dashboard te dá **visibilidade total de relance:**
 
-| O que você precisa | Pedir pro Claude | Dashboard Visual |
-|---|:-----------:|:----------------:|
-| **Ver tudo de uma vez** em todos os escopos | `ls` em um diretório por vez, tente montar | Árvore de escopos, uma olhada |
-| **O que está carregado no meu projeto atual?** | Executar vários comandos, torcer para não ter perdido nada | Abrir projeto → ver cadeia de herança completa |
-| **Mover itens entre escopos** | Encontrar caminhos codificados, `mv` manualmente | Arrastar e soltar com confirmação |
-| **Ler conteúdo de configuração** | `cat` em cada arquivo um a um | Clicar → painel lateral |
-| **Encontrar duplicatas / itens desatualizados** | `grep` em diretórios crípticos | Busca + filtro por categoria |
-| **Limpar memórias não utilizadas** | Descobrir quais arquivos deletar | Navegar, ler, deletar no lugar |
+| O que você precisa | Pedir ao Claude | dashboard visual |
+|---------------|:-----------:|:----------------:|
+| **Ver tudo de uma vez** em todos os scopes | `ls` em um diretório por vez, montando o resto na mão | Árvore de scopes, de relance |
+| **O que está carregado no meu projeto atual?** | Rodar vários comandos e torcer para não esquecer nada | Abrir o projeto → ver a cadeia completa de herança |
+| **Mover itens entre scopes** | Encontrar paths codificados e usar `mv` na mão | Drag-and-drop com confirmação |
+| **Ler o conteúdo da config** | `cat` em cada arquivo, um por um | Clique → painel lateral |
+| **Encontrar duplicatas / itens antigos** | `grep` em diretórios crípticos | Busca + filtro por categoria |
+| **Limpar memories sem uso** | Descobrir sozinho quais arquivos apagar | Navegar, ler e apagar no lugar |
 
-## Início Rápido
+## início rápido
 
-### Opção 1: npx (sem instalação)
+### opção 1: npx (sem instalar)
 
 ```bash
 npx @mcpware/claude-code-organizer
 ```
 
-### Opção 2: Instalação global
+### opção 2: instalação global
 
 ```bash
 npm install -g @mcpware/claude-code-organizer
 claude-code-organizer
 ```
 
-### Opção 3: Pedir pro Claude
+### opção 3: pedir ao Claude
 
-Cole isso no Claude Code:
+Cole isto no Claude Code:
 
-> Execute `npx @mcpware/claude-code-organizer` — é um dashboard para gerenciar as configurações do Claude Code. Me diga a URL quando estiver pronto.
+> Rode `npx @mcpware/claude-code-organizer` — é um dashboard para gerenciar a config do Claude Code. Me diga a URL quando estiver pronto.
 
-Abre um dashboard em `http://localhost:3847`. Funciona com seu diretório `~/.claude/` real.
+Abre um dashboard em `http://localhost:3847`. Funciona com o seu diretório real em `~/.claude/`.
 
-## O Que Ele Gerencia
+## o que ele gerencia
 
-| Tipo | Visualizar | Mover | Escaneado em | Por que bloqueado? |
+| Tipo | Ver | Mover | Faz scan em | Por que fica bloqueado? |
 |------|:----:|:----:|:----------:|-------------|
-| Memories (feedback, user, project, reference) | Sim | Sim | Global + Project | — |
-| Skills | Sim | Sim | Global + Project | — |
-| MCP Servers | Sim | Sim | Global + Project | — |
-| Config (CLAUDE.md, settings.json) | Sim | Bloqueado | Global + Project | Configurações do sistema — mover pode quebrar a configuração |
-| Hooks | Sim | Bloqueado | Global + Project | Depende do contexto de settings — falhas silenciosas se movidos |
-| Plans | Sim | Sim | Global + Project | — |
-| Plugins | Sim | Bloqueado | Apenas Global | Cache gerenciado pelo Claude Code |
+| `Memory` (feedback, user, project, reference) | Sim | Sim | `Global` + `Project` | — |
+| `Skills` | Sim | Sim | `Global` + `Project` | — |
+| MCP Servers | Sim | Sim | `Global` + `Project` | — |
+| `Config` (CLAUDE.md, settings.json) | Sim | Bloqueado | `Global` + `Project` | Config de sistema — mover pode quebrar a config |
+| `Hooks` | Sim | Bloqueado | `Global` + `Project` | Dependem do contexto das settings — mover pode causar falhas silenciosas |
+| `Plans` | Sim | Sim | `Global` + `Project` | — |
+| `Plugins` | Sim | Bloqueado | Só `Global` | Cache gerenciado pelo Claude Code |
 
-## Hierarquia de Escopos
+## hierarquia de scopes
 
 ```
-Global                       <- aplica em todo lugar
-  Company (workspace)        <- aplica a todos os subprojetos
-    CompanyRepo1             <- específico do projeto
-    CompanyRepo2             <- específico do projeto
-  SideProjects (project)     <- projeto independente
-  Documents (project)        <- projeto independente
+Global                       <- applies everywhere
+  Company (workspace)        <- applies to all sub-projects
+    CompanyRepo1             <- project-specific
+    CompanyRepo2             <- project-specific
+  SideProjects (project)     <- independent project
+  Documents (project)        <- independent project
 ```
 
-Escopos filhos herdam as memórias, skills e servidores MCP do escopo pai.
+Scopes filhos herdam memories, skills e servidores MCP dos scopes pai.
 
-## Como Funciona
+## como funciona
 
-1. **Varre** `~/.claude/` — descobre todos os projetos, memórias, skills, servidores MCP, hooks, plugins, planos
-2. **Resolve a hierarquia de escopos** — determina as relações pai-filho a partir dos caminhos do sistema de arquivos
-3. **Renderiza o dashboard** — cabeçalhos de escopo > barras de categoria > linhas de item, com recuo adequado
-4. **Gerencia movimentações** — quando você arrasta ou clica em "Mover para...", realmente move os arquivos no disco com verificações de segurança
+1. **Faz scan em** `~/.claude/` — descobre todos os projetos, memories, skills, servidores MCP, hooks, plugins e plans
+2. **Determina a hierarquia de scopes** — identifica as relações de pai e filho a partir dos paths no filesystem
+3. **Renderiza o dashboard** — cabeçalhos de scope > barras de categoria > linhas de item, com a indentação correta
+4. **Executa os moves** — quando você arrasta ou clica em "Move to...", os arquivos são realmente movidos no disco com safety checks
 
-## Comparação
+## comparação
 
-Analisamos todas as ferramentas de configuração do Claude Code que encontramos. Nenhuma oferecia hierarquia visual de escopos + movimentação cross-scope com arrastar e soltar em um dashboard independente.
+Analisamos todas as ferramentas de config do Claude Code que conseguimos encontrar. Nenhuma oferecia hierarquia visual de scopes + moves entre scopes com drag-and-drop em um dashboard standalone.
 
-| O que eu precisava | App desktop (600+⭐) | Extensão VS Code | App web full-stack | **Claude Code Organizer** |
+| O que eu precisava | Desktop app (600+⭐) | VS Code extension | Full-stack web app | **Claude Code Organizer** |
 |---------|:---:|:---:|:---:|:---:|
-| Árvore de hierarquia de escopos | Não | Sim | Parcial | **Sim** |
-| Movimentação com arrastar e soltar | Não | Não | Não | **Sim** |
-| Movimentação cross-scope | Não | Um clique | Não | **Sim** |
-| Deletar itens desatualizados | Não | Não | Não | **Sim** |
-| Ferramentas MCP | Não | Não | Sim | **Sim** |
-| Zero dependências | Não (Tauri) | Não (VS Code) | Não (React+Rust+SQLite) | **Sim** |
-| Independente (sem IDE) | Sim | Não | Sim | **Sim** |
+| Árvore de scopes | No | Yes | Partial | **Yes** |
+| Moves com drag-and-drop | No | No | No | **Yes** |
+| Moves entre scopes | No | One-click | No | **Yes** |
+| Apagar itens antigos | No | No | No | **Yes** |
+| Ferramentas MCP | No | No | Yes | **Yes** |
+| Zero dependências | No (Tauri) | No (VS Code) | No (React+Rust+SQLite) | **Yes** |
+| Standalone (sem IDE) | Yes | No | Yes | **Yes** |
 
-## Suporte de Plataformas
+## suporte de plataforma
 
-| Plataforma | Status |
+| Platform | Status |
 |----------|:------:|
-| Ubuntu / Linux | Suportado |
-| macOS (Intel + Apple Silicon) | Suportado (testado pela comunidade no Sequoia M3) |
-| Windows | Ainda não |
-| WSL | Deve funcionar (não testado) |
+| Ubuntu / Linux | Supported |
+| macOS (Intel + Apple Silicon) | Supported (community-tested on Sequoia M3) |
+| Windows | Not yet |
+| WSL | Should work (untested) |
 
-## Estrutura do Projeto
+## estrutura do projeto
 
 ```
 src/
-  scanner.mjs       # Varre ~/.claude/ — dados puros, sem efeitos colaterais
-  mover.mjs         # Move arquivos entre escopos — verificações de segurança + rollback
-  server.mjs        # Servidor HTTP — apenas rotas, sem lógica
+  scanner.mjs       # Scans ~/.claude/ — pure data, no side effects
+  mover.mjs         # Moves files between scopes — safety checks + rollback
+  server.mjs        # HTTP server — routes only, no logic
   ui/
-    index.html       # Estrutura HTML
-    style.css        # Todo o estilo (edite livremente, não vai quebrar a lógica)
-    app.js           # Renderização frontend + SortableJS + interações
+    index.html       # HTML structure
+    style.css        # All styling (edit freely, won't break logic)
+    app.js           # Frontend rendering + SortableJS + interactions
 bin/
-  cli.mjs            # Ponto de entrada
+  cli.mjs            # Entry point
 ```
 
-Frontend e backend são completamente separados. Edite os arquivos em `src/ui/` para mudar a aparência sem tocar em nenhuma lógica.
+Frontend e backend são totalmente separados. Edite os arquivos em `src/ui/` para mudar o visual sem tocar na lógica.
 
 ## API
 
@@ -171,27 +171,27 @@ O dashboard é sustentado por uma REST API:
 
 | Endpoint | Método | Descrição |
 |----------|--------|-------------|
-| `/api/scan` | GET | Varre todas as customizações, retorna escopos + itens + contagens |
-| `/api/move` | POST | Move um item para um escopo diferente (suporta desambiguação por categoria/nome) |
-| `/api/delete` | POST | Deleta um item permanentemente |
-| `/api/restore` | POST | Restaura um arquivo deletado (para desfazer) |
-| `/api/restore-mcp` | POST | Restaura uma entrada de servidor MCP deletada |
-| `/api/destinations` | GET | Obtém destinos válidos de movimentação para um item |
+| `/api/scan` | GET | Faz scan de todas as customizações e retorna scopes + items + contagens |
+| `/api/move` | POST | Move um item para outro scope (com suporte a desambiguação por categoria/nome) |
+| `/api/delete` | POST | Apaga um item permanentemente |
+| `/api/restore` | POST | Restaura um arquivo apagado (para desfazer) |
+| `/api/restore-mcp` | POST | Restaura uma entrada apagada de servidor MCP |
+| `/api/destinations` | GET | Retorna os destinos válidos de move para um item |
 | `/api/file-content` | GET | Lê o conteúdo do arquivo para o painel de detalhes |
 
-## Licença
+## licença
 
 MIT
 
-## Mais de @mcpware
+## mais de @mcpware
 
-| Projeto | O que faz | Instalação |
+| Project | O que faz | Install |
 |---------|---|---|
-| **[Instagram MCP](https://github.com/mcpware/instagram-mcp)** | 23 ferramentas da Instagram Graph API — posts, comentários, DMs, stories, analytics | `npx @mcpware/instagram-mcp` |
-| **[UI Annotator](https://github.com/mcpware/ui-annotator-mcp)** | Rótulos ao passar o mouse em qualquer página web — IA referencia elementos pelo nome | `npx @mcpware/ui-annotator` |
+| **[Instagram MCP](https://github.com/mcpware/instagram-mcp)** | 23 ferramentas da Instagram Graph API — posts, comentários, DMs, stories e analytics | `npx @mcpware/instagram-mcp` |
+| **[UI Annotator](https://github.com/mcpware/ui-annotator-mcp)** | Labels de hover em qualquer página web — a IA referencia elementos pelo nome | `npx @mcpware/ui-annotator` |
 | **[Pagecast](https://github.com/mcpware/pagecast)** | Grava sessões do navegador como GIF ou vídeo via MCP | `npx @mcpware/pagecast` |
-| **[LogoLoom](https://github.com/mcpware/logoloom)** | Design de logo com IA → SVG → exportação de kit de marca completo | `npx @mcpware/logoloom` |
+| **[LogoLoom](https://github.com/mcpware/logoloom)** | Design de logo com IA → SVG → exportação completa de brand kit | `npx @mcpware/logoloom` |
 
-## Autor
+## autor
 
-[ithiria894](https://github.com/ithiria894) — Construindo ferramentas para o ecossistema Claude Code.
+[ithiria894](https://github.com/ithiria894) — Criando ferramentas para o ecossistema do Claude Code.

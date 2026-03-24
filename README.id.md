@@ -9,189 +9,189 @@
 
 [English](README.md) | [简体中文](README.zh-CN.md) | [繁體中文](README.zh-TW.md) | [日本語](README.ja.md) | [한국어](README.ko.md) | [Español](README.es.md) | Bahasa Indonesia | [Italiano](README.it.md) | [Português](README.pt-BR.md) | [Türkçe](README.tr.md) | [Tiếng Việt](README.vi.md) | [ไทย](README.th.md)
 
-**Atur semua memori, skill, MCP server, dan hook Claude Code Anda — lihat berdasarkan hierarki scope, pindahkan antar scope dengan drag-and-drop.**
+**Rapikan semua memory, skill, MCP server, dan hook Claude Code Anda — lihat berdasarkan hierarki scope, pindahkan antar-scope lewat drag-and-drop.**
 
 ![Claude Code Organizer Demo](docs/demo.gif)
 
-## Masalahnya
+## masalahnya
 
-Claude Code diam-diam membuat memori, skill, dan konfigurasi MCP setiap kali Anda bekerja — dan membuangnya ke scope mana pun yang sesuai dengan direktori Anda saat ini. Preferensi yang Anda inginkan di mana-mana? Terjebak di satu proyek. Skill deploy yang hanya cocok untuk satu repo? Bocor ke global, mencemari semua proyek lainnya.
+Setiap kali dipakai, Claude Code diam-diam membuat memory, skill, dan config MCP, lalu menaruhnya ke scope yang dianggap cocok berdasarkan direktori aktif Anda. Preferensi yang seharusnya berlaku di semua tempat? Malah terkunci di satu Project. Skill deploy yang seharusnya hanya hidup di satu repo? Bocor ke Global dan ikut mengotori project lain.
 
-**Ini bukan sekadar berantakan — ini merusak performa AI Anda.** Setiap sesi, Claude memuat semua konfigurasi dari scope saat ini ditambah semua yang diwarisi dari scope induk ke dalam context window Anda. Item di scope yang salah = token terbuang, konteks tercemar, dan akurasi yang lebih rendah. Skill Python pipeline yang ada di global ikut dimuat ke sesi frontend React Anda. Entri MCP duplikat menginisialisasi server yang sama dua kali. Memori lama bertentangan dengan instruksi Anda saat ini.
+**Ini bukan cuma soal berantakan, tetapi juga soal performa AI Anda.** Di setiap sesi, Claude memuat semua config dari scope aktif beserta semua yang diwarisi dari parent scope ke dalam context window. Item yang salah scope berarti token terbuang, context tercemar, dan akurasi ikut turun. Skill Python pipeline yang tersimpan di Global bisa ikut dimuat saat Anda sedang mengerjakan frontend React. Entri MCP yang duplikat dapat menginisialisasi server yang sama dua kali. Memory lama pun bisa berbenturan dengan instruksi terbaru Anda.
 
-### "Minta saja Claude untuk memperbaikinya"
+### "suruh saja Claude yang membereskannya"
 
-Anda bisa meminta Claude Code untuk mengelola konfigurasinya sendiri. Tapi Anda akan bolak-balik — `ls` satu direktori, `cat` setiap file, mencoba menyusun gambaran utuh dari potongan-potongan output teks. **Tidak ada perintah yang menampilkan seluruh pohon** di semua scope, semua item, semua pewarisan sekaligus.
+Anda memang bisa meminta Claude Code mengelola config-nya sendiri. Tetapi praktiknya tetap merepotkan: `ls` satu direktori, `cat` file satu per satu, lalu merangkai sendiri gambaran besarnya dari serpihan output teks. **Tidak ada satu command pun yang bisa menampilkan seluruh tree** lintas semua scope, semua item, dan seluruh inheritance sekaligus.
 
-### Solusinya: dashboard visual
+### solusinya: dashboard visual
 
 ```bash
 npx @mcpware/claude-code-organizer
 ```
 
-Satu perintah. Lihat semua yang disimpan Claude — terorganisir berdasarkan hierarki scope. **Seret item antar scope.** Hapus memori yang sudah usang. Temukan duplikat. Kendalikan apa yang sebenarnya mempengaruhi perilaku Claude.
+Cukup satu command. Semua yang disimpan Claude langsung terlihat, tersusun menurut hierarki scope. **Pindahkan item antar-scope dengan drag-and-drop.** Hapus stale memory. Temukan duplikat. Kendalikan apa saja yang benar-benar memengaruhi perilaku Claude.
 
-### Contoh: Project → Global
+### contoh: Project → Global
 
-Anda memberitahu Claude "Saya lebih suka TypeScript + ESM" saat berada di dalam sebuah proyek, tapi preferensi itu berlaku di mana-mana. Buka dashboard, seret memori tersebut dari Project ke Global. **Selesai. Satu seret.**
+Anda pernah memberi tahu Claude, "I prefer TypeScript + ESM", saat sedang berada di sebuah project, padahal preferensi itu berlaku untuk semua pekerjaan Anda. Buka dashboard, lalu drag memory tersebut dari Project ke Global. **Selesai. Cukup sekali drag.**
 
-### Contoh: Global → Project
+### contoh: Global → Project
 
-Skill deploy yang ada di global hanya masuk akal untuk satu repo. Seret ke scope Project tersebut — proyek lain tidak akan melihatnya lagi.
+Ada skill deploy di Global yang sebenarnya hanya relevan untuk satu repo. Drag skill itu ke scope Project yang tepat, dan project lain tidak akan ikut melihatnya lagi.
 
-### Contoh: Hapus memori yang sudah usang
+### contoh: hapus memory yang sudah usang
 
-Claude secara otomatis membuat memori dari hal-hal yang Anda katakan secara kasual, atau hal-hal yang *menurut Claude* ingin Anda ingat. Seminggu kemudian memori itu sudah tidak relevan tapi masih dimuat ke setiap sesi. Jelajahi, baca, hapus. **Anda yang mengontrol apa yang Claude pikir diketahuinya tentang Anda.**
+Claude bisa membuat memory otomatis dari hal-hal yang Anda ucapkan sambil lalu, atau dari sesuatu yang *menurutnya* perlu diingat. Seminggu kemudian isinya sudah tidak relevan, tetapi tetap dimuat di setiap sesi. Buka, baca, hapus. **Anda yang menentukan apa yang Claude anggap ia ketahui tentang Anda.**
 
 ---
 
-## Fitur
+## fitur
 
-- **Hierarki berbasis scope** — Lihat semua item terorganisir sebagai Global > Workspace > Project, dengan indikator pewarisan
-- **Drag-and-drop** — Pindahkan memori antar scope, skill antara global dan per-repo, MCP server antar konfigurasi
-- **Konfirmasi pemindahan** — Setiap pemindahan menampilkan modal konfirmasi sebelum menyentuh file apa pun
-- **Keamanan tipe yang sama** — Memori hanya bisa dipindah ke folder memori, skill ke folder skill, MCP ke konfigurasi MCP
-- **Pencarian & filter** — Cari secara instan di semua item, filter berdasarkan kategori (Memory, Skills, MCP, Config, Hooks, Plugins, Plans)
-- **Panel detail** — Klik item apa pun untuk melihat metadata lengkap, deskripsi, path file, dan buka di VS Code
-- **Pemindaian per-proyek lengkap** — Setiap scope menampilkan semua jenis item: memori, skill, MCP server, konfigurasi, hook, dan rencana
-- **Pemindahan file nyata** — Benar-benar memindahkan file di `~/.claude/`, bukan sekadar penampil
-- **45 uji E2E** — Suite pengujian Playwright dengan verifikasi filesystem nyata setelah setiap operasi
+- **Hierarki berbasis scope** — Semua item terlihat dalam susunan Global > Workspace > Project, lengkap dengan indikator inheritance
+- **Drag-and-drop** — Pindahkan memory antar-scope, skill antara Global dan per-repo, MCP server antar-config
+- **Konfirmasi perpindahan** — Setiap perpindahan selalu memunculkan modal konfirmasi sebelum file apa pun disentuh
+- **Pembatasan berdasarkan tipe** — Memory hanya bisa dipindahkan ke folder Memory, skill ke folder skill, dan MCP ke config MCP
+- **Search & filter** — Cari item seketika di seluruh daftar, lalu filter berdasarkan kategori (Memory, Skills, MCP, Config, Hooks, Plugins, Plans)
+- **Detail panel** — Klik item mana pun untuk melihat metadata lengkap, deskripsi, file path, dan membukanya di VS Code
+- **Scan penuh per-project** — Setiap scope menampilkan semua jenis item: memory, skill, MCP server, config, hook, dan plan
+- **Perpindahan file sungguhan** — File benar-benar dipindahkan di `~/.claude/`, bukan sekadar viewer
+- **45 E2E tests** — Test suite Playwright dengan verifikasi filesystem nyata setelah setiap operasi
 
-## Mengapa Dashboard Visual?
+## mengapa pakai dashboard visual?
 
-Claude Code sudah bisa mencantumkan dan memindahkan file melalui CLI — tapi Anda terjebak bermain tebak-tebakan dengan konfigurasi Anda sendiri. Dashboard memberikan **visibilitas penuh dalam sekali pandang:**
+Claude Code sebenarnya sudah bisa menampilkan dan memindahkan file lewat CLI, tetapi kalau Anda ingin memahami config sendiri, ujung-ujungnya tetap harus bongkar satu-satu sambil menebak-nebak. Dashboard ini memberi **visibilitas penuh dalam sekali lihat:**
 
-| Yang Anda butuhkan | Tanya Claude | Dashboard Visual |
-|---|:-----------:|:----------------:|
-| **Lihat semuanya sekaligus** di semua scope | `ls` satu direktori sekaligus, susun sendiri | Pohon scope, sekali pandang |
-| **Apa yang dimuat di proyek saya saat ini?** | Jalankan banyak perintah, berharap mendapat semuanya | Buka proyek → lihat rantai pewarisan lengkap |
-| **Pindahkan item antar scope** | Temukan path yang ter-encode, `mv` secara manual | Drag-and-drop dengan konfirmasi |
-| **Baca isi konfigurasi** | `cat` setiap file satu per satu | Klik → panel samping |
-| **Temukan duplikat / item usang** | `grep` di direktori yang membingungkan | Cari + filter berdasarkan kategori |
-| **Bersihkan memori yang tidak terpakai** | Cari tahu file mana yang harus dihapus | Jelajahi, baca, hapus di tempat |
+| Yang ingin Anda lakukan | Tanya Claude | dashboard visual |
+|---------------|:-----------:|:----------------:|
+| **Melihat semuanya sekaligus** lintas semua scope | `ls` satu direktori setiap kali, lalu rangkai sendiri | Tree scope, cukup sekali lihat |
+| **Apa saja yang dimuat di project aktif saya?** | Jalankan beberapa command, lalu berharap tidak ada yang terlewat | Buka project → lihat seluruh rantai inheritance |
+| **Memindahkan item antar-scope** | Cari path yang sudah di-encode, lalu `mv` manual | Drag-and-drop dengan konfirmasi |
+| **Membaca isi config** | `cat` tiap file satu per satu | Klik → panel samping |
+| **Mencari duplikat / item usang** | `grep` di direktori yang sulit dibaca | Search + filter per kategori |
+| **Membersihkan memory yang tidak terpakai** | Tentukan sendiri file mana yang harus dihapus | Jelajahi, baca, hapus di tempat |
 
-## Mulai Cepat
+## mulai cepat
 
-### Opsi 1: npx (tidak perlu instalasi)
+### opsi 1: npx (tanpa install)
 
 ```bash
 npx @mcpware/claude-code-organizer
 ```
 
-### Opsi 2: Instalasi global
+### opsi 2: install global
 
 ```bash
 npm install -g @mcpware/claude-code-organizer
 claude-code-organizer
 ```
 
-### Opsi 3: Minta Claude
+### opsi 3: minta Claude
 
 Tempelkan ini ke Claude Code:
 
-> Jalankan `npx @mcpware/claude-code-organizer` — ini adalah dashboard untuk mengelola pengaturan Claude Code. Beritahu saya URL-nya ketika sudah siap.
+> Jalankan `npx @mcpware/claude-code-organizer` — ini dashboard untuk mengelola pengaturan Claude Code. Beri tahu saya URL-nya saat sudah siap.
 
-Membuka dashboard di `http://localhost:3847`. Bekerja dengan direktori `~/.claude/` Anda yang sebenarnya.
+Dashboard akan terbuka di `http://localhost:3847`. Aplikasi ini bekerja langsung dengan direktori `~/.claude/` Anda yang sebenarnya.
 
-## Yang Dikelolanya
+## yang dikelola
 
-| Tipe | Lihat | Pindah | Dipindai di | Mengapa dikunci? |
+| Tipe | Lihat | Pindah | Di-scan di | Kenapa dikunci? |
 |------|:----:|:----:|:----------:|-------------|
-| Memori (feedback, user, project, reference) | Ya | Ya | Global + Project | — |
+| Memories (feedback, user, project, reference) | Ya | Ya | Global + Project | — |
 | Skills | Ya | Ya | Global + Project | — |
 | MCP Servers | Ya | Ya | Global + Project | — |
-| Config (CLAUDE.md, settings.json) | Ya | Dikunci | Global + Project | Pengaturan sistem — pemindahan bisa merusak konfigurasi |
-| Hooks | Ya | Dikunci | Global + Project | Bergantung pada konteks pengaturan — kegagalan diam-diam jika dipindah |
+| Config (CLAUDE.md, settings.json) | Ya | Dikunci | Global + Project | System settings — perpindahan bisa merusak config |
+| Hooks | Ya | Dikunci | Global + Project | Bergantung pada context settings — jika dipindah bisa gagal diam-diam |
 | Plans | Ya | Ya | Global + Project | — |
-| Plugins | Ya | Dikunci | Global saja | Cache yang dikelola Claude Code |
+| Plugins | Ya | Dikunci | Global only | Cache yang dikelola Claude Code |
 
-## Hierarki Scope
+## hierarki scope
 
 ```
-Global                       <- berlaku di mana-mana
-  Company (workspace)        <- berlaku untuk semua sub-proyek
-    CompanyRepo1             <- spesifik proyek
-    CompanyRepo2             <- spesifik proyek
-  SideProjects (project)     <- proyek independen
-  Documents (project)        <- proyek independen
+Global                       <- applies everywhere
+  Company (workspace)        <- applies to all sub-projects
+    CompanyRepo1             <- project-specific
+    CompanyRepo2             <- project-specific
+  SideProjects (project)     <- independent project
+  Documents (project)        <- independent project
 ```
 
-Scope anak mewarisi memori, skill, dan MCP server dari scope induk.
+Scope turunan mewarisi memory, skill, dan MCP server dari parent scope.
 
-## Cara Kerjanya
+## cara kerjanya
 
-1. **Memindai** `~/.claude/` — menemukan semua proyek, memori, skill, MCP server, hook, plugin, rencana
-2. **Menyelesaikan hierarki scope** — menentukan hubungan induk-anak dari path filesystem
+1. **Memindai** `~/.claude/` — menemukan semua project, memory, skill, MCP server, hook, plugin, dan plan
+2. **Menentukan hierarki scope** — memetakan relasi parent-child dari path filesystem
 3. **Merender dashboard** — header scope > bar kategori > baris item, dengan indentasi yang tepat
-4. **Menangani pemindahan** — ketika Anda menyeret atau mengklik "Move to...", benar-benar memindahkan file di disk dengan pemeriksaan keamanan
+4. **Menangani perpindahan** — saat Anda drag item atau mengklik "Move to...", file di disk benar-benar dipindahkan dengan safety check
 
-## Perbandingan
+## perbandingan
 
-Kami melihat setiap alat konfigurasi Claude Code yang bisa kami temukan. Tidak ada yang menawarkan hierarki scope visual + pemindahan lintas-scope drag-and-drop dalam satu dashboard mandiri.
+Kami meninjau semua tool config Claude Code yang bisa kami temukan. Tidak ada satu pun yang menawarkan hierarki scope visual plus perpindahan lintas-scope via drag-and-drop dalam dashboard standalone.
 
 | Yang saya butuhkan | Desktop app (600+⭐) | VS Code extension | Full-stack web app | **Claude Code Organizer** |
 |---------|:---:|:---:|:---:|:---:|
-| Pohon hierarki scope | Tidak | Ya | Sebagian | **Ya** |
-| Pemindahan drag-and-drop | Tidak | Tidak | Tidak | **Ya** |
-| Pemindahan lintas-scope | Tidak | Satu klik | Tidak | **Ya** |
-| Hapus item usang | Tidak | Tidak | Tidak | **Ya** |
-| Alat MCP | Tidak | Tidak | Ya | **Ya** |
-| Zero dependencies | Tidak (Tauri) | Tidak (VS Code) | Tidak (React+Rust+SQLite) | **Ya** |
-| Mandiri (tanpa IDE) | Ya | Tidak | Ya | **Ya** |
+| Tree hierarki scope | No | Yes | Partial | **Yes** |
+| Perpindahan drag-and-drop | No | No | No | **Yes** |
+| Perpindahan lintas-scope | No | One-click | No | **Yes** |
+| Hapus item usang | No | No | No | **Yes** |
+| Tool MCP | No | No | Yes | **Yes** |
+| Zero dependencies | No (Tauri) | No (VS Code) | No (React+Rust+SQLite) | **Yes** |
+| Standalone (tanpa IDE) | Yes | No | Yes | **Yes** |
 
-## Dukungan Platform
+## dukungan platform
 
 | Platform | Status |
 |----------|:------:|
 | Ubuntu / Linux | Didukung |
-| macOS (Intel + Apple Silicon) | Didukung (diuji komunitas di Sequoia M3) |
-| Windows | Belum tersedia |
-| WSL | Seharusnya berjalan (belum diuji) |
+| macOS (Intel + Apple Silicon) | Didukung (sudah diuji komunitas di Sequoia M3) |
+| Windows | Belum |
+| WSL | Seharusnya bisa jalan (belum diuji) |
 
-## Struktur Proyek
+## struktur project
 
 ```
 src/
-  scanner.mjs       # Memindai ~/.claude/ — data murni, tanpa efek samping
-  mover.mjs         # Memindahkan file antar scope — pemeriksaan keamanan + rollback
-  server.mjs        # HTTP server — hanya route, tanpa logika
+  scanner.mjs       # Scans ~/.claude/ — pure data, no side effects
+  mover.mjs         # Moves files between scopes — safety checks + rollback
+  server.mjs        # HTTP server — routes only, no logic
   ui/
-    index.html       # Struktur HTML
-    style.css        # Semua styling (edit bebas, tidak merusak logika)
-    app.js           # Rendering frontend + SortableJS + interaksi
+    index.html       # HTML structure
+    style.css        # All styling (edit freely, won't break logic)
+    app.js           # Frontend rendering + SortableJS + interactions
 bin/
   cli.mjs            # Entry point
 ```
 
-Frontend dan backend sepenuhnya terpisah. Edit file `src/ui/` untuk mengubah tampilan tanpa menyentuh logika apa pun.
+Frontend dan backend dipisahkan sepenuhnya. Anda bisa mengubah tampilan lewat file di `src/ui/` tanpa menyentuh logic apa pun.
 
 ## API
 
-Dashboard didukung oleh REST API:
+Dashboard ini berjalan di atas REST API:
 
-| Endpoint | Metode | Deskripsi |
+| Endpoint | Method | Deskripsi |
 |----------|--------|-------------|
-| `/api/scan` | GET | Pindai semua kustomisasi, mengembalikan scope + item + jumlah |
-| `/api/move` | POST | Pindahkan item ke scope yang berbeda (mendukung disambiguasi kategori/nama) |
-| `/api/delete` | POST | Hapus item secara permanen |
-| `/api/restore` | POST | Pulihkan file yang dihapus (untuk undo) |
-| `/api/restore-mcp` | POST | Pulihkan entri MCP server yang dihapus |
-| `/api/destinations` | GET | Dapatkan tujuan pemindahan yang valid untuk sebuah item |
-| `/api/file-content` | GET | Baca isi file untuk panel detail |
+| `/api/scan` | GET | Scan semua kustomisasi, lalu mengembalikan scope + item + count |
+| `/api/move` | POST | Memindahkan item ke scope lain (mendukung disambiguasi kategori/nama) |
+| `/api/delete` | POST | Menghapus item secara permanen |
+| `/api/restore` | POST | Memulihkan file yang sudah dihapus (untuk undo) |
+| `/api/restore-mcp` | POST | Memulihkan entri MCP server yang dihapus |
+| `/api/destinations` | GET | Mengambil tujuan perpindahan yang valid untuk sebuah item |
+| `/api/file-content` | GET | Membaca isi file untuk detail panel |
 
-## Lisensi
+## lisensi
 
 MIT
 
-## Lainnya dari @mcpware
+## proyek lain dari @mcpware
 
-| Proyek | Fungsinya | Instalasi |
+| Project | Apa fungsinya | Install |
 |---------|---|---|
-| **[Instagram MCP](https://github.com/mcpware/instagram-mcp)** | 23 alat Instagram Graph API — posting, komentar, DM, stories, analitik | `npx @mcpware/instagram-mcp` |
-| **[UI Annotator](https://github.com/mcpware/ui-annotator-mcp)** | Label hover di halaman web mana pun — AI merujuk elemen berdasarkan nama | `npx @mcpware/ui-annotator` |
-| **[Pagecast](https://github.com/mcpware/pagecast)** | Rekam sesi browser sebagai GIF atau video melalui MCP | `npx @mcpware/pagecast` |
-| **[LogoLoom](https://github.com/mcpware/logoloom)** | Desain logo AI → SVG → ekspor kit merek lengkap | `npx @mcpware/logoloom` |
+| **[Instagram MCP](https://github.com/mcpware/instagram-mcp)** | 23 tool Instagram Graph API — posts, comments, DMs, stories, analytics | `npx @mcpware/instagram-mcp` |
+| **[UI Annotator](https://github.com/mcpware/ui-annotator-mcp)** | Label hover di halaman web mana pun — AI mereferensikan elemen berdasarkan nama | `npx @mcpware/ui-annotator` |
+| **[Pagecast](https://github.com/mcpware/pagecast)** | Rekam sesi browser sebagai GIF atau video lewat MCP | `npx @mcpware/pagecast` |
+| **[LogoLoom](https://github.com/mcpware/logoloom)** | Desain logo dengan AI → SVG → ekspor brand kit lengkap | `npx @mcpware/logoloom` |
 
-## Penulis
+## penulis
 
-[ithiria894](https://github.com/ithiria894) — Membangun alat untuk ekosistem Claude Code.
+[ithiria894](https://github.com/ithiria894) — Membangun tool untuk ekosistem Claude Code.
