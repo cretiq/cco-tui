@@ -716,13 +716,14 @@ async function scanSessions(scope) {
     const s = await safeStat(fullPath);
     const sessionId = entry.name.replace(/\.jsonl$/, "");
     const [headLines, tailLines] = await Promise.all([
-      readFirstLines(fullPath, 5),
-      readLastLines(fullPath, 20, s?.size || 0),
+      readFirstLines(fullPath, 10),  // aiTitle is at line 4-6
+      readLastLines(fullPath, 30, s?.size || 0),
     ]);
 
+    // aiTitle appears near the TOP of the file (line 4-6), not the end
     let name = sessionId;
-    for (let i = tailLines.length - 1; i >= 0; i--) {
-      const parsed = parseJsonLine(tailLines[i]);
+    for (const line of headLines) {
+      const parsed = parseJsonLine(line);
       const aiTitle = parsed?.aiTitle;
       if (typeof aiTitle === "string" && aiTitle.trim()) {
         name = aiTitle.trim();
