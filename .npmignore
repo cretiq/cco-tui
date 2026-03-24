@@ -4,5 +4,23 @@ mcp-publisher
 *.tgz
 PLAN.md
 SHIP.md
-mockup.html
 docs/
+
+# Dev/design files
+mockup*.html
+ui-map-regions.png
+ui-reference-map.png
+.impeccable.md
+
+# Marketing assets
+marketing/
+
+# Claude worktrees/config
+.claude/
+
+# CI
+.github/
+
+# Plugin packaging (distributed separately)
+.claude-plugin/
+skills/
