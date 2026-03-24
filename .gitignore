@@ -4,5 +4,12 @@ node_modules/
 .env
 .claude/
 .impeccable.md
-mockup-*.html
+
+# Internal — never push
+marketing/
+mockup*.html
 ui-*.png
+PLAN.md
+SHIP.md
+tests/
+test-results/
