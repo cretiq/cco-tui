@@ -6,7 +6,7 @@
  * Pure data module. No HTTP, no UI, no side effects.
  */
 
-import { readdir, stat, readFile, access } from "node:fs/promises";
+import { readdir, stat, readFile, access, open } from "node:fs/promises";
 import { join, relative, basename, extname } from "node:path";
 import { homedir, platform } from "node:os";
 
@@ -31,6 +31,76 @@ async function safeReadFile(p) {
 
 async function safeStat(p) {
   try { return await stat(p); } catch { return null; }
+}
+
+function countNewlines(buffer) {
+  let count = 0;
+  for (const byte of buffer) {
+    if (byte === 10) count++;
+  }
+  return count;
+}
+
+async function readFirstLines(p, maxLines, chunkSize = 8192) {
+  let handle;
+  try {
+    handle = await open(p, "r");
+    const chunks = [];
+    let position = 0;
+    let newlineCount = 0;
+
+    while (newlineCount < maxLines) {
+      const buffer = Buffer.alloc(chunkSize);
+      const { bytesRead } = await handle.read(buffer, 0, chunkSize, position);
+      if (!bytesRead) break;
+      const chunk = buffer.subarray(0, bytesRead);
+      chunks.push(chunk);
+      position += bytesRead;
+      newlineCount += countNewlines(chunk);
+    }
+
+    return Buffer.concat(chunks).toString("utf-8").split(/\r?\n/).slice(0, maxLines);
+  } catch {
+    return [];
+  } finally {
+    if (handle) await handle.close();
+  }
+}
+
+async function readLastLines(p, maxLines, fileSize, chunkSize = 8192) {
+  if (!fileSize) return [];
+
+  let handle;
+  try {
+    handle = await open(p, "r");
+    const chunks = [];
+    let position = fileSize;
+    let newlineCount = 0;
+
+    while (position > 0 && newlineCount < maxLines) {
+      const start = Math.max(0, position - chunkSize);
+      const length = position - start;
+      const buffer = Buffer.alloc(length);
+      const { bytesRead } = await handle.read(buffer, 0, length, start);
+      if (!bytesRead) break;
+      const chunk = buffer.subarray(0, bytesRead);
+      chunks.unshift(chunk);
+      position = start;
+      newlineCount += countNewlines(chunk);
+    }
+
+    const lines = Buffer.concat(chunks).toString("utf-8").split(/\r?\n/);
+    if (lines.at(-1) === "") lines.pop();
+    return lines.slice(-maxLines);
+  } catch {
+    return [];
+  } finally {
+    if (handle) await handle.close();
+  }
+}
+
+function parseJsonLine(line) {
+  try { return JSON.parse(line); } catch { return null; }
 }
 
 function formatSize(bytes) {
@@ -620,6 +690,61 @@ async function scanPlans(scope) {
   return items;
 }
 
+async function scanSessions(scope) {
+  if (scope.id === "global" || !scope.claudeProjectDir) return [];
+
+  const items = [];
+  const entries = await readdir(scope.claudeProjectDir, { withFileTypes: true });
+
+  for (const entry of entries) {
+    if (!entry.isFile() || !entry.name.endsWith(".jsonl")) continue;
+
+    const fullPath = join(scope.claudeProjectDir, entry.name);
+    const s = await safeStat(fullPath);
+    const sessionId = entry.name.replace(/\.jsonl$/, "");
+    const [headLines, tailLines] = await Promise.all([
+      readFirstLines(fullPath, 5),
+      readLastLines(fullPath, 20, s?.size || 0),
+    ]);
+
+    let name = sessionId;
+    for (let i = tailLines.length - 1; i >= 0; i--) {
+      const parsed = parseJsonLine(tailLines[i]);
+      const aiTitle = parsed?.aiTitle;
+      if (typeof aiTitle === "string" && aiTitle.trim()) {
+        name = aiTitle.trim();
+        break;
+      }
+    }
+
+    let description = "";
+    for (const line of headLines) {
+      const parsed = parseJsonLine(line);
+      const text = parsed?.message?.content?.[0]?.text;
+      if (typeof text === "string" && text.trim()) {
+        description = text.replace(/\s+/g, " ").trim().slice(0, 80);
+        break;
+      }
+    }
+
+    items.push({
+      category: "session",
+      scopeId: scope.id,
+      name,
+      fileName: entry.name,
+      description,
+      subType: "session",
+      size: s ? formatSize(s.size) : "0B",
+      sizeBytes: s ? s.size : 0,
+      mtime: s ? s.mtime.toISOString().slice(0, 10) : "",
+      path: fullPath,
+      locked: true,
+    });
+  }
+
+  return items;
+}
+
 // ── Main scan function ───────────────────────────────────────────────
 
 /**
@@ -627,7 +752,7 @@ async function scanPlans(scope) {
  * {
  *   scopes: [ { id, name, type, tag, parentId, ... } ],
  *   items: [ { category, scopeId, name, description, subType, size, path, ... } ],
- *   counts: { memory: N, skill: N, mcp: N, config: N, hook: N, plugin: N, plan: N, total: N }
+ *   counts: { memory: N, skill: N, mcp: N, config: N, hook: N, plugin: N, plan: N, session: N, total: N }
  * }
  */
 export async function scan() {
@@ -637,15 +762,16 @@ export async function scan() {
 
   // Scan per-scope items
   for (const scope of scopes) {
-    const [memories, skills, mcpServers, configs, hooks, plans] = await Promise.all([
+    const [memories, skills, mcpServers, configs, hooks, plans, sessions] = await Promise.all([
       scanMemories(scope),
       scanSkills(scope),
       scanMcpServers(scope),
       scanConfigs(scope),
       scanHooks(scope),
       scanPlans(scope),
+      scanSessions(scope),
     ]);
-    allItems.push(...memories, ...skills, ...mcpServers, ...configs, ...hooks, ...plans);
+    allItems.push(...memories, ...skills, ...mcpServers, ...configs, ...hooks, ...plans, ...sessions);
   }
 
   // Scan global-only items

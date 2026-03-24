@@ -29,11 +29,12 @@ const CATEGORIES = {
   hook:    { icon: "🪝", label: "HOOKS",       group: null },
   plugin:  { icon: "🧩", label: "PLUGINS",     group: null },
   plan:    { icon: "📐", label: "PLANS",       group: null },
+  session: { icon: "💬", label: "SESSIONS",    group: null },
 };
 
 const ITEM_ICONS = {
   memory: "🧠", skill: "⚡", mcp: "🔌", config: "⚙️",
-  hook: "🪝", plugin: "🧩", plan: "📐",
+  hook: "🪝", plugin: "🧩", plan: "📐", session: "💬",
 };
 
 const SCOPE_ICONS = { global: "🌐", workspace: "📂", project: "📂" };
@@ -71,6 +72,7 @@ function renderPills() {
     { key: "hook", label: "🪝 Hooks", count: data.counts.hook || 0 },
     { key: "plugin", label: "🧩 Plugins", count: data.counts.plugin || 0 },
     { key: "plan", label: "📐 Plans", count: data.counts.plan || 0 },
+    { key: "session", label: "💬 Sessions", count: data.counts.session || 0 },
   ];
 
   // "All" is active when no filters selected
@@ -917,6 +919,12 @@ async function loadPreview(item) {
     // Plugin: directory, no single file to preview
     if (item.category === "plugin") {
       el.textContent = `Plugin directory: ${item.path}`;
+      return;
+    }
+
+    // Sessions can be large JSONL conversation logs; avoid loading them fully in the UI.
+    if (item.category === "session") {
+      el.textContent = `Session log: ${item.fileName}\n\nView-only for now. Open the file to inspect the full conversation.`;
       return;
     }
 

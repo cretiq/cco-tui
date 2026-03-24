@@ -196,6 +196,25 @@ async function createTestEnv() {
   await mkdir(globalPlansDir, { recursive: true });
   await writeFile(join(globalPlansDir, 'roadmap.md'), '# Roadmap\nQ2 goals and milestones.');
 
+  // ── Sessions (project-scoped conversation logs) ──
+  const projectClaudeDir = join(claudeDir, 'projects', encodedProject);
+  const sessionId = 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee';
+  const sessionLines = [
+    JSON.stringify({ type: 'start', timestamp: '2026-03-23T10:00:00Z', sessionId }),
+    JSON.stringify({ parentUuid: null, type: 'message', message: { role: 'user', content: [{ type: 'text', text: 'Help me refactor the auth module to use OAuth2' }] }, sessionId }),
+    JSON.stringify({ type: 'message', message: { role: 'assistant', content: [{ type: 'text', text: 'Sure, let me look at the auth code.' }] }, sessionId }),
+    JSON.stringify({ type: 'summary', aiTitle: 'Refactor auth to OAuth2', sessionId }),
+  ];
+  await writeFile(join(projectClaudeDir, `${sessionId}.jsonl`), sessionLines.join('\n') + '\n');
+
+  // Session without title
+  const sessionId2 = '11111111-2222-3333-4444-555555555555';
+  const sessionLines2 = [
+    JSON.stringify({ type: 'start', timestamp: '2026-03-22T09:00:00Z', sessionId: sessionId2 }),
+    JSON.stringify({ type: 'message', message: { role: 'user', content: [{ type: 'text', text: 'Quick question about the deploy script' }] }, sessionId: sessionId2 }),
+  ];
+  await writeFile(join(projectClaudeDir, `${sessionId2}.jsonl`), sessionLines2.join('\n') + '\n');
+
   // ── Start server ──
   const server = await new Promise((resolve, reject) => {
     const proc = spawn(NODE_BIN, [join(PROJECT_ROOT, 'bin', 'cli.mjs'), '--port', String(port)], {
@@ -295,6 +314,7 @@ test.describe('API Layer', () => {
     expect(counts.config).toBeGreaterThanOrEqual(2); // global settings + project CLAUDE.md + project settings
     expect(counts.hook).toBe(2);     // 1 global hook + 1 project hook
     expect(counts.plan).toBe(2);     // 1 global plan + 1 project plan
+    expect(counts.session).toBe(2);  // 2 project sessions
   });
 
   test('scan returns correct memory metadata', async () => {
@@ -364,11 +384,48 @@ test.describe('API Layer', () => {
     expect(projectMcp.description).toContain('local-server.js');
   });
 
+  test('scan detects sessions with title from aiTitle', async () => {
+    const { items } = await (await fetch(`${env.baseURL}/api/scan`)).json();
+
+    // Session with title
+    const titled = items.find(i => i.category === 'session' && i.name === 'Refactor auth to OAuth2');
+    expect(titled).toBeTruthy();
+    expect(titled.scopeId).toBe(env.encodedProject);
+    expect(titled.description).toContain('refactor the auth module');
+    expect(titled.locked).toBe(true);
+  });
+
+  test('scan detects sessions without title using UUID as name', async () => {
+    const { items } = await (await fetch(`${env.baseURL}/api/scan`)).json();
+
+    // Session without title — should use UUID as name
+    const untitled = items.find(i =>
+      i.category === 'session' && i.name === '11111111-2222-3333-4444-555555555555'
+    );
+    expect(untitled).toBeTruthy();
+    expect(untitled.description).toContain('deploy script');
+  });
+
+  test('sessions are not in global scope', async () => {
+    const { items } = await (await fetch(`${env.baseURL}/api/scan`)).json();
+    const globalSessions = items.filter(i => i.category === 'session' && i.scopeId === 'global');
+    expect(globalSessions).toHaveLength(0);
+  });
+
+  test('session pill shows in UI with correct count', async ({ page }) => {
+    await page.goto(env.baseURL);
+    await page.waitForSelector('#loading', { state: 'hidden' });
+
+    const sessionPill = page.locator('.pill[data-filter="session"]');
+    await expect(sessionPill).toBeVisible();
+    await expect(sessionPill).toContainText('2');
+  });
+
   test('all non-movable item types are locked', async () => {
     const { items } = await (await fetch(`${env.baseURL}/api/scan`)).json();
 
     // These categories must ALL be locked
-    const lockedCategories = ['config', 'hook', 'plugin'];
+    const lockedCategories = ['config', 'hook', 'plugin', 'session'];
     for (const cat of lockedCategories) {
       const catItems = items.filter(i => i.category === cat);
       for (const item of catItems) {
