@@ -198,22 +198,44 @@ async function createTestEnv() {
 
   // ── Sessions (project-scoped conversation logs) ──
   const projectClaudeDir = join(claudeDir, 'projects', encodedProject);
+
+  // Session 1: has aiTitle at line 5 (matches real Claude Code behavior)
   const sessionId = 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee';
   const sessionLines = [
-    JSON.stringify({ type: 'start', timestamp: '2026-03-23T10:00:00Z', sessionId }),
+    JSON.stringify({ type: 'create', timestamp: '2026-03-23T10:00:00Z', sessionId }),
+    JSON.stringify({ type: 'create', operation: 'init', timestamp: '2026-03-23T10:00:01Z', sessionId }),
     JSON.stringify({ parentUuid: null, type: 'message', message: { role: 'user', content: [{ type: 'text', text: 'Help me refactor the auth module to use OAuth2' }] }, sessionId }),
     JSON.stringify({ type: 'message', message: { role: 'assistant', content: [{ type: 'text', text: 'Sure, let me look at the auth code.' }] }, sessionId }),
-    JSON.stringify({ type: 'summary', aiTitle: 'Refactor auth to OAuth2', sessionId }),
+    JSON.stringify({ type: 'ai-title', sessionId, aiTitle: 'Refactor auth to OAuth2' }),
+    JSON.stringify({ type: 'message', message: { role: 'user', content: [{ type: 'text', text: 'Actually focus on the login endpoint first' }] }, sessionId }),
+    JSON.stringify({ type: 'message', message: { role: 'assistant', content: [{ type: 'text', text: 'OK, starting with the login endpoint.' }] }, sessionId }),
   ];
   await writeFile(join(projectClaudeDir, `${sessionId}.jsonl`), sessionLines.join('\n') + '\n');
 
-  // Session without title
+  // Session 2: no title, string content format, multiple user messages
   const sessionId2 = '11111111-2222-3333-4444-555555555555';
   const sessionLines2 = [
     JSON.stringify({ type: 'start', timestamp: '2026-03-22T09:00:00Z', sessionId: sessionId2 }),
-    JSON.stringify({ type: 'message', message: { role: 'user', content: [{ type: 'text', text: 'Quick question about the deploy script' }] }, sessionId: sessionId2 }),
+    JSON.stringify({ type: 'message', message: { role: 'user', content: 'Quick question about the deploy script' }, sessionId: sessionId2 }),
+    JSON.stringify({ type: 'message', message: { role: 'assistant', content: 'Sure, what do you need?' }, sessionId: sessionId2 }),
+    JSON.stringify({ type: 'message', message: { role: 'user', content: 'How do I rollback a failed deploy?' }, sessionId: sessionId2 }),
   ];
   await writeFile(join(projectClaudeDir, `${sessionId2}.jsonl`), sessionLines2.join('\n') + '\n');
+
+  // Session 3: starts with IDE event (should be skipped for description)
+  const sessionId3 = '22222222-3333-4444-5555-666666666666';
+  const sessionLines3 = [
+    JSON.stringify({ type: 'start', sessionId: sessionId3 }),
+    JSON.stringify({ type: 'message', message: { role: 'user', content: [{ type: 'text', text: '<ide_opened_file>The user opened some file</ide_opened_file>' }] }, sessionId: sessionId3 }),
+    JSON.stringify({ type: 'message', message: { role: 'user', content: [{ type: 'text', text: 'Fix the broken import in auth.ts' }] }, sessionId: sessionId3 }),
+    JSON.stringify({ type: 'ai-title', sessionId: sessionId3, aiTitle: 'Fix broken import' }),
+    JSON.stringify({ type: 'message', message: { role: 'user', content: [{ type: 'text', text: 'Thanks, now also fix the test file' }] }, sessionId: sessionId3 }),
+  ];
+  await writeFile(join(projectClaudeDir, `${sessionId3}.jsonl`), sessionLines3.join('\n') + '\n');
+
+  // Session 3 subagent directory (should be cleaned up on delete)
+  await mkdir(join(projectClaudeDir, sessionId3, 'subagents'), { recursive: true });
+  await writeFile(join(projectClaudeDir, sessionId3, 'subagents', 'agent-abc.jsonl'), '{}');
 
   // ── Start server ──
   const server = await new Promise((resolve, reject) => {
@@ -314,7 +336,7 @@ test.describe('API Layer', () => {
     expect(counts.config).toBeGreaterThanOrEqual(2); // global settings + project CLAUDE.md + project settings
     expect(counts.hook).toBe(2);     // 1 global hook + 1 project hook
     expect(counts.plan).toBe(2);     // 1 global plan + 1 project plan
-    expect(counts.session).toBe(2);  // 2 project sessions
+    expect(counts.session).toBe(3);  // 3 project sessions
   });
 
   test('scan returns correct memory metadata', async () => {
@@ -384,27 +406,48 @@ test.describe('API Layer', () => {
     expect(projectMcp.description).toContain('local-server.js');
   });
 
-  test('scan detects sessions with title from aiTitle', async () => {
+  test('session aiTitle read from file head (line 4-5)', async () => {
     const { items } = await (await fetch(`${env.baseURL}/api/scan`)).json();
-
-    // Session with title
     const titled = items.find(i => i.category === 'session' && i.name === 'Refactor auth to OAuth2');
     expect(titled).toBeTruthy();
     expect(titled.scopeId).toBe(env.encodedProject);
-    expect(titled.description).toContain('refactor the auth module');
     expect(titled.deletable).toBe(true);
     expect(titled.locked).toBeFalsy();
   });
 
-  test('scan detects sessions without title using UUID as name', async () => {
+  test('session description uses last user message (not first)', async () => {
     const { items } = await (await fetch(`${env.baseURL}/api/scan`)).json();
+    // Session 1 has first msg "Help me refactor..." but last msg "Actually focus on the login endpoint first"
+    const titled = items.find(i => i.category === 'session' && i.name === 'Refactor auth to OAuth2');
+    expect(titled.description).toContain('login endpoint');
+    expect(titled.description).not.toContain('Help me refactor');
+  });
 
-    // Session without title — should use UUID as name
+  test('session handles string content format (not just array)', async () => {
+    const { items } = await (await fetch(`${env.baseURL}/api/scan`)).json();
+    // Session 2 uses string content format, last msg is "How do I rollback"
     const untitled = items.find(i =>
       i.category === 'session' && i.name === '11111111-2222-3333-4444-555555555555'
     );
     expect(untitled).toBeTruthy();
-    expect(untitled.description).toContain('deploy script');
+    expect(untitled.description).toContain('rollback');
+  });
+
+  test('session description skips IDE events', async () => {
+    const { items } = await (await fetch(`${env.baseURL}/api/scan`)).json();
+    // Session 3 starts with <ide_opened_file>, last real msg is "fix the test file"
+    const session3 = items.find(i => i.category === 'session' && i.name === 'Fix broken import');
+    expect(session3).toBeTruthy();
+    expect(session3.description).toContain('fix the test file');
+    expect(session3.description).not.toContain('ide_opened_file');
+  });
+
+  test('sessions without aiTitle use UUID as name', async () => {
+    const { items } = await (await fetch(`${env.baseURL}/api/scan`)).json();
+    const untitled = items.find(i =>
+      i.category === 'session' && i.name === '11111111-2222-3333-4444-555555555555'
+    );
+    expect(untitled).toBeTruthy();
   });
 
   test('sessions are not in global scope', async () => {
@@ -416,31 +459,53 @@ test.describe('API Layer', () => {
   test('session pill shows in UI with correct count', async ({ page }) => {
     await page.goto(env.baseURL);
     await page.waitForSelector('#loading', { state: 'hidden' });
-
     const sessionPill = page.locator('.pill[data-filter="session"]');
     await expect(sessionPill).toBeVisible();
-    await expect(sessionPill).toContainText('2');
+    await expect(sessionPill).toContainText('3');
   });
 
   test('session has delete button but no move button in UI', async ({ page }) => {
     await page.goto(env.baseURL);
     await page.waitForSelector('#loading', { state: 'hidden' });
     await page.click('#expandToggle');
-
     const sessionRow = page.locator('.item-row[data-category="session"]').first();
     if (await sessionRow.count() > 0) {
-      // Should have delete and open, but NOT move
       await expect(sessionRow.locator('.rbtn[data-action="delete"]')).toHaveCount(1);
       await expect(sessionRow.locator('.rbtn[data-action="open"]')).toHaveCount(1);
       await expect(sessionRow.locator('.rbtn[data-action="move"]')).toHaveCount(0);
     }
   });
 
-  test('delete session removes .jsonl file from disk', async () => {
+  test('session preview shows conversation via /api/session-preview', async () => {
     const { items } = await (await fetch(`${env.baseURL}/api/scan`)).json();
-    const session = items.find(i => i.category === 'session' && i.name.includes('11111111'));
+    const session = items.find(i => i.category === 'session' && i.name === 'Refactor auth to OAuth2');
+    const res = await fetch(`${env.baseURL}/api/session-preview?path=${encodeURIComponent(session.path)}`);
+    const data = await res.json();
+    expect(data.ok).toBe(true);
+    expect(data.content).toContain('Refactor auth to OAuth2'); // title
+    expect(data.content).toContain('👤 User');
+    expect(data.content).toContain('🤖 Assistant');
+    expect(data.content).toContain('login endpoint'); // last message present
+  });
+
+  test('session preview handles string content format', async () => {
+    const { items } = await (await fetch(`${env.baseURL}/api/scan`)).json();
+    const session = items.find(i => i.name === '11111111-2222-3333-4444-555555555555');
+    const res = await fetch(`${env.baseURL}/api/session-preview?path=${encodeURIComponent(session.path)}`);
+    const data = await res.json();
+    expect(data.ok).toBe(true);
+    expect(data.content).toContain('deploy script');
+    expect(data.content).toContain('rollback');
+  });
+
+  test('delete session removes .jsonl + subagent directory', async () => {
+    const { items } = await (await fetch(`${env.baseURL}/api/scan`)).json();
+    const session = items.find(i => i.category === 'session' && i.name === 'Fix broken import');
     expect(session).toBeTruthy();
     expect(await fileExists(session.path)).toBe(true);
+    // Subagent dir exists
+    const subDir = session.path.replace(/\.jsonl$/, '');
+    expect(await dirExists(subDir)).toBe(true);
 
     const res = await fetch(`${env.baseURL}/api/delete`, {
       method: 'POST',
@@ -449,6 +514,7 @@ test.describe('API Layer', () => {
     });
     expect((await res.json()).ok).toBe(true);
     expect(await fileExists(session.path)).toBe(false);
+    expect(await dirExists(subDir)).toBe(false); // subagent dir also deleted
   });
 
   test('all non-movable item types are locked', async () => {
@@ -707,6 +773,98 @@ test.describe('Mutations — MCP', () => {
     const moved = after.items.find(i => i.name === 'deploy' && i.category === 'skill');
     expect(moved).toBeTruthy();
     expect(moved.scopeId).toBe(env.encodedProject);
+  });
+});
+
+test.describe('Mutations — Plans', () => {
+  let env;
+  test.beforeEach(async () => { env = await createTestEnv(); });
+  test.afterEach(async () => { await env.cleanup(); });
+
+  test('plan move from global to project scope + verify on disk', async () => {
+    const scanRes = await (await fetch(`${env.baseURL}/api/scan`)).json();
+    const plan = scanRes.items.find(i => i.name === 'roadmap' && i.category === 'plan');
+    expect(plan).toBeTruthy();
+    expect(plan.scopeId).toBe('global');
+
+    const srcPath = plan.path;
+    const dstDir = join(env.claudeDir, 'projects', env.encodedProject, 'plans');
+    const dstPath = join(dstDir, 'roadmap.md');
+
+    expect(await fileExists(srcPath)).toBe(true);
+
+    const res = await fetch(`${env.baseURL}/api/move`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ itemPath: srcPath, toScopeId: env.encodedProject, category: 'plan', name: 'roadmap' }),
+    });
+    expect((await res.json()).ok).toBe(true);
+
+    expect(await fileExists(srcPath)).toBe(false);
+    expect(await fileExists(dstPath)).toBe(true);
+    expect(await readFile(dstPath, 'utf-8')).toContain('Q2 goals');
+
+    // Rescan confirms
+    const after = await (await fetch(`${env.baseURL}/api/scan`)).json();
+    const moved = after.items.find(i => i.name === 'roadmap' && i.category === 'plan');
+    expect(moved.scopeId).toBe(env.encodedProject);
+  });
+
+  test('plan delete removes file from disk', async () => {
+    const scanRes = await (await fetch(`${env.baseURL}/api/scan`)).json();
+    const plan = scanRes.items.find(i => i.name === 'refactor-auth' && i.category === 'plan');
+    expect(plan).toBeTruthy();
+    expect(await fileExists(plan.path)).toBe(true);
+
+    const res = await fetch(`${env.baseURL}/api/delete`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ itemPath: plan.path, category: 'plan', name: 'refactor-auth' }),
+    });
+    expect((await res.json()).ok).toBe(true);
+    expect(await fileExists(plan.path)).toBe(false);
+  });
+});
+
+test.describe('Mutations — Restore', () => {
+  let env;
+  test.beforeEach(async () => { env = await createTestEnv(); });
+  test.afterEach(async () => { await env.cleanup(); });
+
+  test('restore-mcp re-adds deleted MCP server entry', async () => {
+    const mcpJson = join(env.claudeDir, '.mcp.json');
+
+    // Delete test-server
+    const scanRes = await (await fetch(`${env.baseURL}/api/scan`)).json();
+    const mcp = scanRes.items.find(i => i.name === 'test-server' && i.category === 'mcp');
+    await fetch(`${env.baseURL}/api/delete`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ itemPath: mcp.path, category: 'mcp', name: 'test-server' }),
+    });
+
+    // Verify deleted
+    const afterDelete = JSON.parse(await readFile(mcpJson, 'utf-8'));
+    expect(afterDelete.mcpServers['test-server']).toBeUndefined();
+
+    // Restore
+    const res = await fetch(`${env.baseURL}/api/restore-mcp`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: 'test-server',
+        config: { command: 'node', args: ['server.js'] },
+        mcpJsonPath: mcpJson,
+      }),
+    });
+    expect((await res.json()).ok).toBe(true);
+
+    // Verify restored
+    const afterRestore = JSON.parse(await readFile(mcpJson, 'utf-8'));
+    expect(afterRestore.mcpServers['test-server']).toBeTruthy();
+    expect(afterRestore.mcpServers['test-server'].command).toBe('node');
+    // Other entries untouched
+    expect(afterRestore.mcpServers['dev-tools']).toBeTruthy();
   });
 });
 
