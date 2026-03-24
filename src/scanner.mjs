@@ -527,6 +527,7 @@ async function scanHooks(scope) {
               sizeBytes: 0,
               mtime: "",
               path: source.path,
+              locked: true,
             });
           }
         }

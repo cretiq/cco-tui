@@ -364,6 +364,58 @@ test.describe('API Layer', () => {
     expect(projectMcp.description).toContain('local-server.js');
   });
 
+  test('all non-movable item types are locked', async () => {
+    const { items } = await (await fetch(`${env.baseURL}/api/scan`)).json();
+
+    // These categories must ALL be locked
+    const lockedCategories = ['config', 'hook', 'plan', 'plugin'];
+    for (const cat of lockedCategories) {
+      const catItems = items.filter(i => i.category === cat);
+      for (const item of catItems) {
+        expect(item.locked).toBe(true);
+      }
+    }
+
+    // These categories must NOT be locked
+    const movableCategories = ['memory', 'skill', 'mcp'];
+    for (const cat of movableCategories) {
+      const catItems = items.filter(i => i.category === cat);
+      for (const item of catItems) {
+        expect(item.locked).toBeFalsy();
+      }
+    }
+  });
+
+  test('locked items have no checkbox or move/delete buttons in UI', async ({ page }) => {
+    await page.goto(env.baseURL);
+    await page.waitForSelector('#loading', { state: 'hidden' });
+    await page.click('#expandToggle');
+
+    // Hook items should have no checkbox and no action buttons
+    const hookRows = page.locator('.item-row[data-category="hook"]');
+    if (await hookRows.count() > 0) {
+      const firstHook = hookRows.first();
+      await expect(firstHook.locator('.row-chk')).toHaveCount(0);
+      await expect(firstHook.locator('.rbtn')).toHaveCount(0);
+    }
+
+    // Config items same
+    const configRows = page.locator('.item-row[data-category="config"]');
+    if (await configRows.count() > 0) {
+      const firstConfig = configRows.first();
+      await expect(firstConfig.locator('.row-chk')).toHaveCount(0);
+      await expect(firstConfig.locator('.rbtn')).toHaveCount(0);
+    }
+
+    // Plan items same
+    const planRows = page.locator('.item-row[data-category="plan"]');
+    if (await planRows.count() > 0) {
+      const firstPlan = planRows.first();
+      await expect(firstPlan.locator('.row-chk')).toHaveCount(0);
+      await expect(firstPlan.locator('.rbtn')).toHaveCount(0);
+    }
+  });
+
   test('GET /api/destinations rejects locked items', async () => {
     const { items } = await (await fetch(`${env.baseURL}/api/scan`)).json();
     const config = items.find(i => i.category === 'config');
