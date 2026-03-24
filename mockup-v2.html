@@ -1,0 +1,1192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Claude Code Organizer — V2 Design Mockup</title>
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    /* ══════════════════════════════════════
+       COLOR SYSTEM — OKLCH with hex fallbacks
+       ══════════════════════════════════════ */
+    :root {
+      color-scheme: light dark;
+
+      /* Surfaces */
+      --bg: #f8f7f5;
+      --bg: oklch(0.975 0.004 70);
+      --surface: #fefefe;
+      --surface: oklch(0.995 0.002 70);
+      --surface-raised: #fcfbf9;
+      --surface-raised: oklch(0.99 0.003 70);
+      --surface-inset: #f0eeeb;
+      --surface-inset: oklch(0.96 0.005 70);
+
+      /* Borders */
+      --border: #ddd9d3;
+      --border: oklch(0.88 0.008 70);
+      --border-light: #e9e5e0;
+      --border-light: oklch(0.92 0.006 70);
+
+      /* Text */
+      --text-primary: #1c1a17;
+      --text-primary: oklch(0.18 0.01 70);
+      --text-secondary: #5c5650;
+      --text-secondary: oklch(0.40 0.012 70);
+      --text-muted: #8a8379;
+      --text-muted: oklch(0.58 0.01 70);
+      --text-faint: #b3aca4;
+      --text-faint: oklch(0.72 0.008 70);
+
+      /* Accent — Warm Teal */
+      --accent: #0d7d6c;
+      --accent: oklch(0.55 0.14 175);
+      --accent-hover: #0a6b5c;
+      --accent-hover: oklch(0.50 0.14 175);
+      --accent-light: #dff0ec;
+      --accent-light: oklch(0.94 0.04 175);
+      --accent-text: #0a5c4f;
+      --accent-text: oklch(0.38 0.10 175);
+
+      /* Scope */
+      --scope-bg: #ecf2f0;
+      --scope-bg: oklch(0.955 0.008 175);
+      --scope-border: #c8ddd7;
+      --scope-border: oklch(0.88 0.02 175);
+      --cat-bg: #f3f1ee;
+      --cat-bg: oklch(0.965 0.005 70);
+      --cat-border: #e3dfda;
+      --cat-border: oklch(0.90 0.006 70);
+      --hover: #f5f3f0;
+      --hover: oklch(0.97 0.006 70);
+
+      /* Tags */
+      --tag-global-bg: oklch(0.93 0.04 175);
+      --tag-global-text: oklch(0.40 0.10 175);
+      --tag-workspace-bg: oklch(0.93 0.04 65);
+      --tag-workspace-text: oklch(0.42 0.12 65);
+      --tag-project-bg: oklch(0.93 0.04 145);
+      --tag-project-text: oklch(0.38 0.10 145);
+
+      /* Badges */
+      --badge-feedback: oklch(0.58 0.13 70);
+      --badge-user: oklch(0.50 0.12 310);
+      --badge-project: oklch(0.52 0.12 250);
+      --badge-reference: oklch(0.52 0.12 160);
+      --badge-skill: oklch(0.55 0.13 50);
+      --badge-mcp: oklch(0.52 0.12 340);
+
+      /* Semantic */
+      --danger: oklch(0.55 0.20 25);
+      --success: oklch(0.55 0.15 155);
+
+      /* Shadows */
+      --shadow-sm: 0 1px 2px rgba(28,26,23,0.06);
+      --shadow-md: 0 4px 12px rgba(28,26,23,0.08);
+
+      /* Radii — rounder, friendlier */
+      --radius-sm: 6px;
+      --radius-md: 8px;
+      --radius-lg: 12px;
+      --radius-xl: 16px;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #1a1816;
+        --bg: oklch(0.13 0.008 70);
+        --surface: #24211e;
+        --surface: oklch(0.17 0.008 70);
+        --surface-raised: #2c2926;
+        --surface-raised: oklch(0.20 0.008 70);
+        --surface-inset: #1e1b18;
+        --surface-inset: oklch(0.14 0.008 70);
+
+        --border: #3d3833;
+        --border: oklch(0.28 0.008 70);
+        --border-light: #332f2b;
+        --border-light: oklch(0.24 0.008 70);
+
+        --text-primary: #ece9e5;
+        --text-primary: oklch(0.92 0.005 70);
+        --text-secondary: #b8b1a8;
+        --text-secondary: oklch(0.75 0.008 70);
+        --text-muted: #8a8379;
+        --text-muted: oklch(0.58 0.008 70);
+        --text-faint: #5c564f;
+        --text-faint: oklch(0.42 0.008 70);
+
+        --accent: #1a9e8a;
+        --accent: oklch(0.62 0.14 175);
+        --accent-hover: oklch(0.67 0.14 175);
+        --accent-light: oklch(0.22 0.04 175);
+        --accent-text: oklch(0.70 0.10 175);
+
+        --scope-bg: oklch(0.18 0.012 175);
+        --scope-border: oklch(0.28 0.02 175);
+        --cat-bg: oklch(0.16 0.006 70);
+        --cat-border: oklch(0.26 0.006 70);
+        --hover: oklch(0.20 0.006 70);
+
+        --tag-global-bg: oklch(0.22 0.04 175);
+        --tag-global-text: oklch(0.70 0.10 175);
+        --tag-workspace-bg: oklch(0.22 0.04 65);
+        --tag-workspace-text: oklch(0.72 0.10 65);
+        --tag-project-bg: oklch(0.22 0.04 145);
+        --tag-project-text: oklch(0.70 0.10 145);
+
+        --badge-feedback: oklch(0.65 0.13 70);
+        --badge-user: oklch(0.60 0.12 310);
+        --badge-project: oklch(0.60 0.12 250);
+        --badge-reference: oklch(0.60 0.12 160);
+        --badge-skill: oklch(0.62 0.13 50);
+        --badge-mcp: oklch(0.60 0.12 340);
+
+        --danger: oklch(0.62 0.20 25);
+        --success: oklch(0.62 0.15 155);
+
+        --shadow-sm: 0 1px 2px rgba(0,0,0,0.20);
+        --shadow-md: 0 4px 12px rgba(0,0,0,0.30);
+      }
+    }
+
+    /* ══════════════════════════════════════
+       RESET & BASE
+       ══════════════════════════════════════ */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text-primary);
+      height: 100vh;
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .mono {
+      font-family: 'Geist Mono', 'SF Mono', 'Cascadia Code', monospace;
+    }
+
+    /* ══════════════════════════════════════
+       APP LAYOUT
+       ══════════════════════════════════════ */
+    .app {
+      display: flex;
+      height: 100vh;
+    }
+
+    .tree-area {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px 40px 80px;
+      max-width: 960px;
+      margin: 0 auto;
+    }
+
+    .detail-panel {
+      width: 340px;
+      flex-shrink: 0;
+      background: var(--surface-raised);
+      border-left: 1px solid var(--border);
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ══════════════════════════════════════
+       PAGE HEADER
+       ══════════════════════════════════════ */
+    .page-hdr {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin-bottom: 32px;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: var(--bg);
+      padding: 16px 0 12px;
+    }
+
+    .logo {
+      width: 32px; height: 32px;
+      background: var(--accent);
+      border-radius: var(--radius-md);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .logo svg { width: 18px; height: 18px; }
+
+    .page-hdr h1 {
+      font-size: clamp(1.1rem, 1.5vw, 1.25rem);
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      color: var(--text-primary);
+    }
+
+    .spacer { flex: 1; }
+
+    /* Pills */
+    .pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+    .pill {
+      padding: 5px 14px;
+      border-radius: 20px;
+      font-size: 0.7rem;
+      font-weight: 500;
+      cursor: pointer;
+      background: var(--surface);
+      color: var(--text-secondary);
+      border: 1px solid var(--border-light);
+      transition: all 150ms ease;
+      user-select: none;
+    }
+    .pill:hover { background: var(--hover); box-shadow: var(--shadow-sm); }
+    .pill.active {
+      background: var(--accent);
+      color: white;
+      border-color: var(--accent);
+      box-shadow: 0 2px 8px oklch(0.55 0.14 175 / 0.25);
+    }
+    .pill b {
+      font-weight: 600;
+      opacity: 0.7;
+      margin-left: 2px;
+    }
+    .pill.active b { opacity: 0.85; }
+
+    /* Search */
+    .search {
+      width: 240px;
+      padding: 7px 14px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border);
+      background: var(--surface-inset);
+      font-size: 0.78rem;
+      font-family: inherit;
+      color: var(--text-primary);
+      outline: none;
+      transition: all 150ms ease;
+    }
+    .search::placeholder { color: var(--text-faint); }
+    .search:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px oklch(0.55 0.14 175 / 0.15);
+    }
+
+    .expand-toggle {
+      padding: 7px 12px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border);
+      background: var(--surface);
+      font-size: 0.72rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 120ms ease;
+      font-family: inherit;
+    }
+    .expand-toggle:hover { background: var(--hover); }
+
+    /* ══════════════════════════════════════
+       SCOPE TREE — THE SIGNATURE ELEMENT
+       ══════════════════════════════════════ */
+    .scope-block { margin-bottom: 2px; }
+
+    .child-scopes {
+      margin-left: 20px;
+    }
+
+    /* Scope Header */
+    .scope-hdr {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 13px 18px;
+      cursor: pointer;
+      border-radius: var(--radius-lg);
+      background: var(--scope-bg);
+      border: 1px solid transparent;
+      box-shadow: var(--shadow-sm);
+      user-select: none;
+      transition: all 150ms ease;
+      margin-bottom: 4px;
+    }
+    .scope-hdr:hover {
+      background: oklch(0.94 0.012 175);
+      box-shadow: var(--shadow-md);
+    }
+    @media (prefers-color-scheme: dark) {
+      .scope-hdr:hover {
+        background: oklch(0.20 0.015 175);
+        box-shadow: var(--shadow-md);
+      }
+    }
+
+    .scope-tog {
+      width: 16px;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.6rem;
+      transition: transform 180ms ease-out;
+      flex-shrink: 0;
+    }
+    .scope-tog.collapsed { transform: rotate(-90deg); }
+
+    .scope-ico { font-size: 1rem; flex-shrink: 0; }
+
+    .scope-nm {
+      font-size: 0.92rem;
+      font-weight: 650;
+      letter-spacing: -0.3px;
+      color: var(--text-primary);
+    }
+
+    .scope-tag {
+      font-size: 0.56rem;
+      padding: 3px 8px;
+      border-radius: var(--radius-sm);
+      font-weight: 600;
+      letter-spacing: 0px;
+    }
+    .tag-global { background: var(--tag-global-bg); color: var(--tag-global-text); }
+    .tag-workspace { background: var(--tag-workspace-bg); color: var(--tag-workspace-text); }
+    .tag-project { background: var(--tag-project-bg); color: var(--tag-project-text); }
+
+    .scope-inherit {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      cursor: default;
+    }
+    .inherit-arrow { color: var(--text-faint); font-size: 0.65rem; }
+    .inherit-pill {
+      background: var(--accent-light);
+      color: var(--accent-text);
+      padding: 1px 6px;
+      border-radius: var(--radius-sm);
+      font-size: 0.52rem;
+      font-weight: 600;
+    }
+
+    .scope-info {
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      margin-left: auto;
+      flex-shrink: 0;
+    }
+
+    .scope-cnt {
+      background: var(--accent-light);
+      color: var(--accent-text);
+      border-radius: var(--radius-md);
+      padding: 2px 9px;
+      font-size: 0.62rem;
+      font-weight: 700;
+    }
+
+    .scope-body { padding: 0 0 6px; }
+
+    /* ══════════════════════════════════════
+       CATEGORY HEADER
+       ══════════════════════════════════════ */
+    .cat-hdr {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 14px;
+      margin: 4px 0 2px 24px;
+      cursor: pointer;
+      background: var(--cat-bg);
+      border: 1px solid transparent;
+      border-radius: var(--radius-md);
+      user-select: none;
+      transition: all 150ms ease;
+    }
+    .cat-hdr:hover { background: var(--hover); box-shadow: var(--shadow-sm); }
+
+    .cat-tog {
+      width: 14px;
+      text-align: center;
+      color: var(--text-faint);
+      font-size: 0.5rem;
+      transition: transform 180ms ease-out;
+      flex-shrink: 0;
+    }
+    .cat-tog.collapsed { transform: rotate(-90deg); }
+
+    .cat-ico { font-size: 0.8rem; }
+
+    .cat-nm {
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      letter-spacing: 0px;
+    }
+
+    .cat-cnt {
+      font-size: 0.6rem;
+      color: var(--text-muted);
+      margin-left: auto;
+      font-weight: 600;
+    }
+
+    /* ══════════════════════════════════════
+       BUNDLE HEADER (Skills)
+       ══════════════════════════════════════ */
+    .bundle-hdr {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 12px;
+      margin: 3px 0 2px 64px;
+      cursor: pointer;
+      background: var(--surface);
+      border: 1px solid transparent;
+      border-radius: var(--radius-md);
+      user-select: none;
+      transition: all 150ms ease;
+    }
+    .bundle-hdr:hover { background: var(--hover); box-shadow: var(--shadow-sm); }
+
+    .bundle-tog {
+      width: 12px;
+      text-align: center;
+      color: var(--text-faint);
+      font-size: 0.45rem;
+      transition: transform 180ms ease-out;
+      flex-shrink: 0;
+    }
+    .bundle-ico { font-size: 0.7rem; }
+    .bundle-nm { font-size: 0.66rem; color: var(--text-secondary); font-weight: 600; }
+    .bundle-src {
+      font-size: 0.56rem;
+      color: var(--text-faint);
+      font-family: 'Geist Mono', monospace;
+    }
+    .bundle-cnt {
+      font-size: 0.56rem;
+      color: var(--text-muted);
+      margin-left: auto;
+      font-weight: 500;
+    }
+
+    /* ══════════════════════════════════════
+       ITEM ROW — Dot badges
+       ══════════════════════════════════════ */
+    .sortable-zone {
+      margin-left: 64px;
+      padding: 2px 0;
+    }
+
+    .item-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 12px;
+      margin: 1px 0;
+      border-radius: var(--radius-md);
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: all 120ms ease;
+    }
+    .item-row:hover {
+      background: var(--hover);
+      box-shadow: var(--shadow-sm);
+    }
+    .item-row.selected {
+      background: var(--accent-light);
+      border-left: 3px solid var(--accent);
+    }
+
+    .row-chk {
+      width: 13px; height: 13px;
+      accent-color: var(--accent);
+      flex-shrink: 0;
+    }
+
+    .row-ico { font-size: 0.75rem; flex-shrink: 0; }
+
+    .row-name {
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: var(--text-primary);
+      letter-spacing: -0.1px;
+    }
+
+    /* Dot badge — the craft detail */
+    .row-badge {
+      font-size: 0.5rem;
+      padding: 1px 6px 1px 0;
+      border-radius: 3px;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: transparent;
+    }
+    .row-badge::before {
+      content: '';
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .b-feedback { color: var(--badge-feedback); }
+    .b-feedback::before { background: var(--badge-feedback); }
+    .b-user { color: var(--badge-user); }
+    .b-user::before { background: var(--badge-user); }
+    .b-project { color: var(--badge-project); }
+    .b-project::before { background: var(--badge-project); }
+    .b-reference { color: var(--badge-reference); }
+    .b-reference::before { background: var(--badge-reference); }
+    .b-skill { color: var(--badge-skill); }
+    .b-skill::before { background: var(--badge-skill); }
+    .b-mcp { color: var(--badge-mcp); }
+    .b-mcp::before { background: var(--badge-mcp); }
+
+    .row-desc {
+      font-size: 0.66rem;
+      color: var(--text-muted);
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .row-meta {
+      font-size: 0.56rem;
+      color: var(--text-faint);
+      flex-shrink: 0;
+      font-family: 'Geist Mono', monospace;
+    }
+
+    .row-actions {
+      display: flex;
+      gap: 3px;
+      opacity: 0;
+      transition: opacity 100ms ease;
+    }
+    .item-row:hover .row-actions { opacity: 1; }
+
+    .rbtn {
+      padding: 3px 8px;
+      border-radius: var(--radius-sm);
+      font-size: 0.6rem;
+      font-weight: 500;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 120ms ease;
+      font-family: inherit;
+    }
+    .rbtn:hover {
+      background: var(--accent);
+      color: white;
+      border-color: var(--accent);
+    }
+    .rbtn.danger:hover {
+      background: var(--danger);
+      border-color: var(--danger);
+    }
+
+    /* ══════════════════════════════════════
+       DETAIL PANEL
+       ══════════════════════════════════════ */
+    .detail-hdr {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border-light);
+      display: flex;
+      align-items: center;
+    }
+    .detail-hdr h2 {
+      font-size: 0.88rem;
+      font-weight: 600;
+      letter-spacing: -0.2px;
+      flex: 1;
+    }
+    .detail-close {
+      width: 28px; height: 28px;
+      border: none; background: transparent;
+      border-radius: var(--radius-sm);
+      color: var(--text-faint);
+      cursor: pointer;
+      font-size: 0.9rem;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 120ms ease;
+    }
+    .detail-close:hover {
+      background: var(--hover);
+      color: var(--text-primary);
+    }
+
+    .detail-breadcrumb {
+      padding: 10px 20px;
+      border-bottom: 1px solid var(--border-light);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.56rem;
+      color: var(--text-muted);
+    }
+    .detail-breadcrumb span {
+      color: var(--text-faint);
+    }
+
+    .detail-meta {
+      padding: 16px 20px 8px;
+    }
+
+    .detail-field {
+      margin-bottom: 12px;
+    }
+    .detail-label {
+      font-size: 0.62rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+    .detail-value {
+      font-size: 0.75rem;
+      color: var(--text-primary);
+      line-height: 1.45;
+    }
+    .detail-path {
+      font-family: 'Geist Mono', monospace;
+      font-size: 0.66rem;
+      color: var(--text-secondary);
+      word-break: break-all;
+    }
+
+    .detail-preview {
+      padding: 0 20px 16px;
+    }
+    .detail-preview-box {
+      background: var(--surface-inset);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-md);
+      padding: 12px 14px;
+      font-family: 'Geist Mono', monospace;
+      font-size: 0.66rem;
+      line-height: 1.6;
+      color: var(--text-secondary);
+      max-height: 200px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+    }
+
+    .detail-footer {
+      margin-top: auto;
+      padding: 14px 20px;
+      border-top: 1px solid var(--border-light);
+      display: flex;
+      gap: 8px;
+    }
+
+    /* ══════════════════════════════════════
+       BUTTONS
+       ══════════════════════════════════════ */
+    .btn {
+      padding: 7px 16px;
+      border-radius: var(--radius-md);
+      font-size: 0.72rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 120ms ease;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text-secondary);
+      font-family: inherit;
+    }
+    .btn:hover { background: var(--hover); }
+    .btn-p {
+      background: var(--accent);
+      color: white;
+      border-color: var(--accent);
+    }
+    .btn-p:hover { background: var(--accent-hover); }
+    .btn-danger {
+      background: var(--danger);
+      color: white;
+      border-color: var(--danger);
+    }
+    .btn-sm {
+      padding: 5px 12px;
+      font-size: 0.68rem;
+    }
+
+    /* ══════════════════════════════════════
+       THEME TOGGLE (for mockup demo)
+       ══════════════════════════════════════ */
+    .theme-toggle {
+      position: fixed;
+      top: 16px;
+      right: 16px;
+      z-index: 100;
+      padding: 8px 16px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text-secondary);
+      font-size: 0.72rem;
+      font-weight: 500;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 120ms ease;
+    }
+    .theme-toggle:hover { background: var(--hover); }
+
+    /* Dark mode force class (for demo toggle) */
+    .dark {
+      --bg: oklch(0.13 0.008 70);
+      --surface: oklch(0.17 0.008 70);
+      --surface-raised: oklch(0.20 0.008 70);
+      --surface-inset: oklch(0.14 0.008 70);
+      --border: oklch(0.28 0.008 70);
+      --border-light: oklch(0.24 0.008 70);
+      --text-primary: oklch(0.92 0.005 70);
+      --text-secondary: oklch(0.75 0.008 70);
+      --text-muted: oklch(0.58 0.008 70);
+      --text-faint: oklch(0.42 0.008 70);
+      --accent: oklch(0.62 0.14 175);
+      --accent-hover: oklch(0.67 0.14 175);
+      --accent-light: oklch(0.22 0.04 175);
+      --accent-text: oklch(0.70 0.10 175);
+      --scope-bg: oklch(0.18 0.012 175);
+      --scope-border: oklch(0.28 0.02 175);
+      --cat-bg: oklch(0.16 0.006 70);
+      --cat-border: oklch(0.26 0.006 70);
+      --hover: oklch(0.20 0.006 70);
+      --tag-global-bg: oklch(0.22 0.04 175);
+      --tag-global-text: oklch(0.70 0.10 175);
+      --tag-workspace-bg: oklch(0.22 0.04 65);
+      --tag-workspace-text: oklch(0.72 0.10 65);
+      --tag-project-bg: oklch(0.22 0.04 145);
+      --tag-project-text: oklch(0.70 0.10 145);
+      --badge-feedback: oklch(0.65 0.13 70);
+      --badge-user: oklch(0.60 0.12 310);
+      --badge-project: oklch(0.60 0.12 250);
+      --badge-reference: oklch(0.60 0.12 160);
+      --badge-skill: oklch(0.62 0.13 50);
+      --badge-mcp: oklch(0.60 0.12 340);
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--text-faint); }
+  </style>
+</head>
+<body>
+  <button class="theme-toggle" onclick="document.body.classList.toggle('dark'); this.textContent = document.body.classList.contains('dark') ? '☀ Light' : '◐ Dark'">◐ Dark</button>
+
+  <div class="app">
+    <div class="tree-area">
+
+      <!-- Page Header -->
+      <div class="page-hdr">
+        <div class="logo">
+          <svg width="18" height="18" viewBox="0 0 248 248" fill="none"><path d="M52.4285 162.873L98.7844 136.879L99.5485 134.602L98.7844 133.334H96.4921L88.7237 132.862L62.2346 132.153L39.3113 131.207L17.0249 130.026L11.4214 128.844L6.2 121.873L6.7094 118.447L11.4214 115.257L18.171 115.847L33.0711 116.911L55.485 118.447L71.6586 119.392L95.728 121.873H99.5485L100.058 120.337L98.7844 119.392L97.7656 118.447L74.5877 102.732L49.4995 86.1905L36.3823 76.62L29.3779 71.7757L25.8121 67.2858L24.2839 57.3608L30.6515 50.2716L39.3113 50.8623L41.4763 51.4531L50.2636 58.1879L68.9842 72.7209L93.4357 90.6804L97.0015 93.6343L98.4374 92.6652L98.6571 91.9801L97.0015 89.2625L83.757 65.2772L69.621 40.8192L63.2534 30.6579L61.5978 24.632C60.9565 22.1032 60.579 20.0111 60.579 17.4246L67.8381 7.49965L71.9133 6.19995L81.7193 7.49965L85.7946 11.0443L91.9074 24.9865L101.714 46.8451L116.996 76.62L121.453 85.4816L123.873 93.6343L124.764 96.1155H126.292V94.6976L127.566 77.9197L129.858 57.3608L132.15 30.8942L132.915 23.4505L136.608 14.4708L143.994 9.62643L149.725 12.344L154.437 19.0788L153.8 23.4505L150.998 41.6463L145.522 70.1215L141.957 89.2625H143.994L146.414 86.7813L156.093 74.0206L172.266 53.698L179.398 45.6635L187.803 36.802L193.152 32.5484H203.34L210.726 43.6549L207.415 55.1159L196.972 68.3492L188.312 79.5739L175.896 96.2095L168.191 109.585L168.882 110.689L170.738 110.53L198.755 104.504L213.91 101.787L231.994 98.7149L240.144 102.496L241.036 106.395L237.852 114.311L218.495 119.037L195.826 123.645L162.07 131.592L161.696 131.893L162.137 132.547L177.36 133.925L183.855 134.279H199.774L229.447 136.524L237.215 141.605L241.8 147.867L241.036 152.711L229.065 158.737L213.019 154.956L175.45 145.977L162.587 142.787H160.805V143.85L171.502 154.366L191.242 172.089L215.82 195.011L217.094 200.682L213.91 205.172L210.599 204.699L188.949 188.394L180.544 181.069L161.696 165.118H160.422V166.772L164.752 173.152L187.803 207.771L188.949 218.405L187.294 221.832L181.308 223.959L174.813 222.777L161.187 203.754L147.305 182.486L136.098 163.345L134.745 164.2L128.075 235.42L125.019 239.082L117.887 241.8L111.902 237.31L108.718 229.984L111.902 215.452L115.722 196.547L118.779 181.541L121.58 162.873L123.291 156.636L123.14 156.219L121.773 156.449L107.699 175.752L86.304 204.699L69.3663 222.777L65.291 224.431L58.2867 220.768L58.9235 214.27L62.8713 208.48L86.304 178.705L100.44 160.155L109.551 149.507L109.462 147.967L108.959 147.924L46.6977 188.512L35.6182 189.93L30.7788 185.44L31.4156 178.115L33.7079 175.752L52.4285 162.873Z" fill="#fff"/></svg>
+        </div>
+        <h1>Claude Code Organizer</h1>
+        <span class="spacer"></span>
+        <div class="pills">
+          <span class="pill active">All <b>109</b></span>
+          <span class="pill">🧠 Memory <b>37</b></span>
+          <span class="pill">⚡ Skills <b>55</b></span>
+          <span class="pill">🔌 MCP <b>3</b></span>
+          <span class="pill">⚙️ Config <b>3</b></span>
+          <span class="pill">🪝 Hooks <b>1</b></span>
+          <span class="pill">📐 Plans <b>9</b></span>
+        </div>
+        <input class="search" type="text" placeholder="Search name, type, description...">
+        <button class="expand-toggle">▸ Expand all</button>
+      </div>
+
+      <!-- ═══ SCOPE: Global ═══ -->
+      <div class="scope-block">
+        <div class="scope-hdr">
+          <span class="scope-tog">▾</span>
+          <span class="scope-ico">🌐</span>
+          <span class="scope-nm">Global</span>
+          <span class="scope-tag tag-global">applies everywhere</span>
+          <span class="scope-info">3 sub-projects</span>
+          <span class="scope-cnt">77</span>
+        </div>
+        <div class="scope-body">
+
+          <!-- Category: Memories -->
+          <div class="cat-hdr">
+            <span class="cat-tog">▾</span>
+            <span class="cat-ico">🧠</span>
+            <span class="cat-nm">Memories</span>
+            <span class="cat-cnt">3</span>
+          </div>
+          <div class="sortable-zone">
+            <div class="item-row">
+              <input type="checkbox" class="row-chk">
+              <span class="row-ico">📝</span>
+              <span class="row-name">feedback_testing</span>
+              <span class="row-badge b-feedback">feedback</span>
+              <span class="row-desc">Integration tests must hit a real database, not mocks</span>
+              <span class="row-meta mono">342B</span>
+              <span class="row-actions">
+                <button class="rbtn">Move</button>
+                <button class="rbtn">Open</button>
+                <button class="rbtn danger">Del</button>
+              </span>
+            </div>
+            <div class="item-row">
+              <input type="checkbox" class="row-chk">
+              <span class="row-ico">📝</span>
+              <span class="row-name">user_role</span>
+              <span class="row-badge b-user">user</span>
+              <span class="row-desc">Senior backend engineer, Go and Python</span>
+              <span class="row-meta mono">218B</span>
+              <span class="row-actions">
+                <button class="rbtn">Move</button>
+                <button class="rbtn">Open</button>
+                <button class="rbtn danger">Del</button>
+              </span>
+            </div>
+            <div class="item-row">
+              <input type="checkbox" class="row-chk">
+              <span class="row-ico">📝</span>
+              <span class="row-name">project_overview</span>
+              <span class="row-badge b-project">project</span>
+              <span class="row-desc">Main product is an AI security control plane</span>
+              <span class="row-meta mono">1.2KB</span>
+              <span class="row-actions">
+                <button class="rbtn">Move</button>
+                <button class="rbtn">Open</button>
+                <button class="rbtn danger">Del</button>
+              </span>
+            </div>
+          </div>
+
+          <!-- Category: Skills -->
+          <div class="cat-hdr">
+            <span class="cat-tog collapsed">▾</span>
+            <span class="cat-ico">⚡</span>
+            <span class="cat-nm">Skills</span>
+            <span class="cat-cnt">16</span>
+          </div>
+
+          <!-- Category: MCP Servers -->
+          <div class="cat-hdr">
+            <span class="cat-tog collapsed">▾</span>
+            <span class="cat-ico">🔌</span>
+            <span class="cat-nm">MCP Servers</span>
+            <span class="cat-cnt">2</span>
+          </div>
+
+          <!-- Category: Plans -->
+          <div class="cat-hdr">
+            <span class="cat-tog collapsed">▾</span>
+            <span class="cat-ico">📐</span>
+            <span class="cat-nm">Plans</span>
+            <span class="cat-cnt">9</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ SCOPE: CompanyRepo (Workspace) ═══ -->
+      <div class="child-scopes">
+        <div class="scope-block">
+          <div class="scope-hdr">
+            <span class="scope-tog">▾</span>
+            <span class="scope-ico">📂</span>
+            <span class="scope-nm">CompanyRepo</span>
+            <span class="scope-tag tag-workspace">workspace</span>
+            <span class="scope-inherit" title="Inherits from Global">
+              <span class="inherit-arrow">↳</span>
+              <span class="inherit-pill">🌐 Global</span>
+            </span>
+            <span class="scope-info">2 sub-projects</span>
+            <span class="scope-cnt">35</span>
+          </div>
+          <div class="scope-body">
+
+            <div class="cat-hdr">
+              <span class="cat-tog">▾</span>
+              <span class="cat-ico">🧠</span>
+              <span class="cat-nm">Memories</span>
+              <span class="cat-cnt">2</span>
+            </div>
+            <div class="sortable-zone">
+              <div class="item-row">
+                <input type="checkbox" class="row-chk">
+                <span class="row-ico">📝</span>
+                <span class="row-name">reference_deploy_guide</span>
+                <span class="row-badge b-reference">reference</span>
+                <span class="row-desc">AWS deployment runbook for staging and production</span>
+                <span class="row-meta mono">856B</span>
+                <span class="row-actions">
+                  <button class="rbtn">Move</button>
+                  <button class="rbtn">Open</button>
+                  <button class="rbtn danger">Del</button>
+                </span>
+              </div>
+              <div class="item-row">
+                <input type="checkbox" class="row-chk">
+                <span class="row-ico">📝</span>
+                <span class="row-name">feedback_pr_format</span>
+                <span class="row-badge b-feedback">feedback</span>
+                <span class="row-desc">Always include test plan in PR descriptions</span>
+                <span class="row-meta mono">290B</span>
+                <span class="row-actions">
+                  <button class="rbtn">Move</button>
+                  <button class="rbtn">Open</button>
+                  <button class="rbtn danger">Del</button>
+                </span>
+              </div>
+            </div>
+
+            <div class="cat-hdr">
+              <span class="cat-tog collapsed">▾</span>
+              <span class="cat-ico">🔌</span>
+              <span class="cat-nm">MCP Servers</span>
+              <span class="cat-cnt">1</span>
+            </div>
+          </div>
+
+          <!-- ═══ Nested: ai-security-control-plane ═══ -->
+          <div class="child-scopes">
+            <div class="scope-block">
+              <div class="scope-hdr">
+                <span class="scope-tog">▾</span>
+                <span class="scope-ico">📂</span>
+                <span class="scope-nm">ai-security-control-plane</span>
+                <span class="scope-tag tag-project">project</span>
+                <span class="scope-inherit" title="Inherits from Global → CompanyRepo">
+                  <span class="inherit-arrow">↳</span>
+                  <span class="inherit-pill">🌐 Global</span>
+                  <span class="inherit-pill">📂 CompanyRepo</span>
+                </span>
+                <span class="scope-cnt">23</span>
+              </div>
+              <div class="scope-body">
+                <div class="cat-hdr">
+                  <span class="cat-tog">▾</span>
+                  <span class="cat-ico">🧠</span>
+                  <span class="cat-nm">Memories</span>
+                  <span class="cat-cnt">8</span>
+                </div>
+                <div class="sortable-zone">
+                  <div class="item-row selected">
+                    <input type="checkbox" class="row-chk" checked>
+                    <span class="row-ico">📝</span>
+                    <span class="row-name">feedback_no_mocks</span>
+                    <span class="row-badge b-feedback">feedback</span>
+                    <span class="row-desc">Integration tests must hit real DB — mocks hide migration failures</span>
+                    <span class="row-meta mono">421B</span>
+                    <span class="row-actions" style="opacity:1">
+                      <button class="rbtn">Move</button>
+                      <button class="rbtn">Open</button>
+                      <button class="rbtn danger">Del</button>
+                    </span>
+                  </div>
+                  <div class="item-row">
+                    <input type="checkbox" class="row-chk">
+                    <span class="row-ico">📝</span>
+                    <span class="row-name">project_auth_rewrite</span>
+                    <span class="row-badge b-project">project</span>
+                    <span class="row-desc">Auth middleware rewrite for compliance, not tech debt</span>
+                    <span class="row-meta mono">678B</span>
+                    <span class="row-actions">
+                      <button class="rbtn">Move</button>
+                      <button class="rbtn">Open</button>
+                      <button class="rbtn danger">Del</button>
+                    </span>
+                  </div>
+                  <div class="item-row">
+                    <input type="checkbox" class="row-chk">
+                    <span class="row-ico">📝</span>
+                    <span class="row-name">user_python_expertise</span>
+                    <span class="row-badge b-user">user</span>
+                    <span class="row-desc">Deep Python + FastAPI expertise, new to React frontend</span>
+                    <span class="row-meta mono">315B</span>
+                    <span class="row-actions">
+                      <button class="rbtn">Move</button>
+                      <button class="rbtn">Open</button>
+                      <button class="rbtn danger">Del</button>
+                    </span>
+                  </div>
+                </div>
+
+                <div class="cat-hdr">
+                  <span class="cat-tog">▾</span>
+                  <span class="cat-ico">⚡</span>
+                  <span class="cat-nm">Skills</span>
+                  <span class="cat-cnt">15</span>
+                </div>
+
+                <!-- Bundle -->
+                <div class="bundle-hdr">
+                  <span class="bundle-tog">▾</span>
+                  <span class="bundle-ico">📦</span>
+                  <span class="bundle-nm">Impeccable</span>
+                  <span class="bundle-src mono">pbakaus/impeccable</span>
+                  <span class="bundle-cnt">12 skills</span>
+                </div>
+                <div class="sortable-zone">
+                  <div class="item-row">
+                    <input type="checkbox" class="row-chk">
+                    <span class="row-ico">⚡</span>
+                    <span class="row-name">frontend-design</span>
+                    <span class="row-badge b-skill">skill</span>
+                    <span class="row-desc">Create distinctive frontend interfaces</span>
+                    <span class="row-meta mono">4.2KB</span>
+                    <span class="row-actions">
+                      <button class="rbtn">Move</button>
+                      <button class="rbtn">Open</button>
+                    </span>
+                  </div>
+                  <div class="item-row">
+                    <input type="checkbox" class="row-chk">
+                    <span class="row-ico">⚡</span>
+                    <span class="row-name">colorize</span>
+                    <span class="row-badge b-skill">skill</span>
+                    <span class="row-desc">Add strategic color to monochromatic features</span>
+                    <span class="row-meta mono">2.8KB</span>
+                    <span class="row-actions">
+                      <button class="rbtn">Move</button>
+                      <button class="rbtn">Open</button>
+                    </span>
+                  </div>
+                  <div class="item-row">
+                    <input type="checkbox" class="row-chk">
+                    <span class="row-ico">⚡</span>
+                    <span class="row-name">typeset</span>
+                    <span class="row-badge b-skill">skill</span>
+                    <span class="row-desc">Improve typography and font hierarchy</span>
+                    <span class="row-meta mono">3.1KB</span>
+                    <span class="row-actions">
+                      <button class="rbtn">Move</button>
+                      <button class="rbtn">Open</button>
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- ═══ Nested: rule-processor ═══ -->
+            <div class="scope-block">
+              <div class="scope-hdr">
+                <span class="scope-tog collapsed">▾</span>
+                <span class="scope-ico">📂</span>
+                <span class="scope-nm">rule-processor</span>
+                <span class="scope-tag tag-project">project</span>
+                <span class="scope-inherit" title="Inherits from Global → CompanyRepo">
+                  <span class="inherit-arrow">↳</span>
+                  <span class="inherit-pill">🌐 Global</span>
+                  <span class="inherit-pill">📂 CompanyRepo</span>
+                </span>
+                <span class="scope-cnt">9</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ═══ SCOPE: Documents ═══ -->
+        <div class="scope-block">
+          <div class="scope-hdr">
+            <span class="scope-tog collapsed">▾</span>
+            <span class="scope-ico">📂</span>
+            <span class="scope-nm">Documents</span>
+            <span class="scope-tag tag-project">project</span>
+            <span class="scope-inherit" title="Inherits from Global">
+              <span class="inherit-arrow">↳</span>
+              <span class="inherit-pill">🌐 Global</span>
+            </span>
+            <span class="scope-cnt">3</span>
+          </div>
+        </div>
+
+        <!-- ═══ SCOPE: MyGithub ═══ -->
+        <div class="scope-block">
+          <div class="scope-hdr">
+            <span class="scope-tog collapsed">▾</span>
+            <span class="scope-ico">📂</span>
+            <span class="scope-nm">MyGithub</span>
+            <span class="scope-tag tag-project">project</span>
+            <span class="scope-inherit" title="Inherits from Global">
+              <span class="inherit-arrow">↳</span>
+              <span class="inherit-pill">🌐 Global</span>
+            </span>
+            <span class="scope-cnt">36</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ═══ DETAIL PANEL ═══ -->
+    <div class="detail-panel">
+      <div class="detail-hdr">
+        <h2>feedback_no_mocks</h2>
+        <button class="detail-close">✕</button>
+      </div>
+      <div class="detail-breadcrumb">
+        <span class="inherit-pill">🌐 Global</span>
+        <span>›</span>
+        <span class="inherit-pill">📂 CompanyRepo</span>
+        <span>›</span>
+        <span class="inherit-pill">📂 ai-security-control-plane</span>
+      </div>
+      <div class="detail-meta">
+        <div class="detail-field">
+          <div class="detail-label">Type</div>
+          <div class="detail-value"><span class="row-badge b-feedback" style="font-size:0.62rem">feedback</span></div>
+        </div>
+        <div class="detail-field">
+          <div class="detail-label">Description</div>
+          <div class="detail-value">Integration tests must hit a real database, not mocks. Reason: prior incident where mock/prod divergence masked a broken migration.</div>
+        </div>
+        <div class="detail-field">
+          <div class="detail-label">Path</div>
+          <div class="detail-path">~/.claude/projects/-home-user-company-ascp/memory/feedback_no_mocks.md</div>
+        </div>
+        <div class="detail-field">
+          <div class="detail-label">Size</div>
+          <div class="detail-value">421 bytes</div>
+        </div>
+        <div class="detail-field">
+          <div class="detail-label">Modified</div>
+          <div class="detail-value">2 hours ago</div>
+        </div>
+      </div>
+      <div class="detail-preview">
+        <div class="detail-label" style="margin-bottom:6px">Preview</div>
+        <div class="detail-preview-box">---
+name: feedback_no_mocks
+description: Integration tests must use real DB
+type: feedback
+---
+
+Integration tests must hit a real database,
+not mocks.
+
+**Why:** Prior incident where mock/prod
+divergence masked a broken migration.
+
+**How to apply:** When writing tests that
+touch database operations, always use the
+test database fixture, never mock the DB
+layer.</div>
+      </div>
+      <div class="detail-footer">
+        <button class="btn btn-sm">Open in Editor</button>
+        <button class="btn btn-p btn-sm">Move to...</button>
+        <button class="btn btn-sm" style="background:var(--danger);color:white;border-color:var(--danger)">Delete</button>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
