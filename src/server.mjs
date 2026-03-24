@@ -211,10 +211,13 @@ async function handleRequest(req, res) {
           if (entry.aiTitle) title = entry.aiTitle;
           if (entry.message?.role && entry.message?.content) {
             const role = entry.message.role === "user" ? "👤 User" : "🤖 Assistant";
-            const text = entry.message.content
-              .filter(c => c.type === "text")
-              .map(c => c.text)
-              .join("\n");
+            const content = entry.message.content;
+            // Content can be string or array of {type, text}
+            const text = typeof content === "string"
+              ? content
+              : Array.isArray(content)
+                ? content.filter(c => c.type === "text").map(c => c.text).join("\n")
+                : "";
             if (text.trim()) {
               totalMessages++;
               const display = text.length > 500 ? text.slice(0, 500) + "\n... (truncated)" : text;

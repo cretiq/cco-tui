@@ -733,7 +733,14 @@ async function scanSessions(scope) {
     let description = "";
     for (const line of headLines) {
       const parsed = parseJsonLine(line);
-      const text = parsed?.message?.content?.[0]?.text;
+      const content = parsed?.message?.content;
+      // Content can be a string or an array of {type, text} objects
+      let text = null;
+      if (typeof content === "string") {
+        text = content;
+      } else if (Array.isArray(content)) {
+        text = content.find(c => c.type === "text")?.text;
+      }
       if (typeof text === "string" && text.trim()) {
         description = text.replace(/\s+/g, " ").trim().slice(0, 80);
         break;
