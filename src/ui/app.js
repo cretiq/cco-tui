@@ -114,6 +114,7 @@ function setupUi() {
   setupScopeDropZones();
   setupThemeToggle();
   setupCcActions();
+  setupExport();
   setupResizers();
 }
 
@@ -667,8 +668,11 @@ function renderItem(item) {
       ${canDeleteItem(item) ? `<button type="button" class="act-btn act-del" data-action="delete">Del</button>` : ""}
     </span>`;
 
+  const dragHandle = item.locked ? "" : `<span class="drag-handle" title="Drag to move">⠿</span>`;
+
   return `
     <div class="item${item.locked ? " locked" : ""}${isSelected ? " selected" : ""}" data-item-key="${esc(key)}" data-path="${esc(item.path)}" data-category="${esc(item.category)}">
+      ${dragHandle}
       ${checkbox}
       <span class="item-ico">${icon}</span>
       <span class="item-name">${esc(item.name)}</span>
@@ -839,6 +843,51 @@ function setupCcActions() {
       btn.innerHTML = `<span class="cc-ico">✅</span>${msg}`;
       setTimeout(() => { btn.innerHTML = orig; }, 2500);
     });
+  });
+}
+
+function setupExport() {
+  const modal = document.getElementById("exportModal");
+  const input = document.getElementById("exportPath");
+  const confirmBtn = document.getElementById("exportConfirm");
+  const cancelBtn = document.getElementById("exportCancel");
+
+  document.getElementById("exportBtn").addEventListener("click", () => {
+    input.value = input.value || "/tmp";
+    modal.classList.remove("hidden");
+    input.focus();
+    input.select();
+  });
+
+  cancelBtn.addEventListener("click", () => modal.classList.add("hidden"));
+  modal.addEventListener("click", (e) => { if (e.target === modal) modal.classList.add("hidden"); });
+
+  confirmBtn.addEventListener("click", async () => {
+    const exportDir = input.value.trim();
+    if (!exportDir || !exportDir.startsWith("/")) {
+      toast("Please enter an absolute path", true);
+      return;
+    }
+    confirmBtn.disabled = true;
+    confirmBtn.textContent = "Exporting...";
+    try {
+      const raw = await fetch("/api/export", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ exportDir }),
+      });
+      const res = await raw.json();
+      if (res.ok) {
+        modal.classList.add("hidden");
+        toast(`${res.copied} items exported to ${res.path}`);
+      } else {
+        toast(res.error || "Export failed", true);
+      }
+    } catch {
+      toast("Export failed", true);
+    }
+    confirmBtn.disabled = false;
+    confirmBtn.textContent = "Export";
   });
 }
 
