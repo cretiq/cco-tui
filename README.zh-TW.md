@@ -6,216 +6,231 @@
 [![GitHub forks](https://img.shields.io/github/forks/mcpware/claude-code-organizer)](https://github.com/mcpware/claude-code-organizer/network/members)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Node.js](https://img.shields.io/badge/node-%3E%3D20-brightgreen)](https://nodejs.org)
+[English](README.md) | [简体中文](README.zh-CN.md) | 繁體中文 | [廣東話](README.zh-HK.md) | [日本語](README.ja.md) | [한국어](README.ko.md) | [Español](README.es.md) | [Bahasa Indonesia](README.id.md) | [Italiano](README.it.md) | [Português](README.pt-BR.md) | [Türkçe](README.tr.md) | [Tiếng Việt](README.vi.md) | [ไทย](README.th.md)
 
-[English](README.md) | [简体中文](README.zh-CN.md) | 繁體中文 | [日本語](README.ja.md) | [한국어](README.ko.md) | [Español](README.es.md) | [Bahasa Indonesia](README.id.md) | [Italiano](README.it.md) | [Português](README.pt-BR.md) | [Türkçe](README.tr.md) | [Tiếng Việt](README.vi.md) | [ไทย](README.th.md)
+**整理你所有 Claude Code 的記憶、skills、MCP servers、commands、agents、rules 和 hooks，依照 scope hierarchy 檢視，並透過 drag-and-drop 在不同 scopes 之間移動。**
 
-**管理晒你所有 Claude Code 嘅記憶、技能、MCP 伺服器、指令、代理、規則同 Hook — 按 scope 層級顯示，拖拉就搬得。**
+> **5 天內突破 100+ stars！** 我第一次把它貼上 Reddit 的 3 天後，它還只有 [11 stars when I first posted it on Reddit 3 days ago](https://www.reddit.com/r/coolgithubprojects/comments/1s12n97/claude_code_organizer_dashboard_that_shows/)。真實使用者實際測試、提供回饋，也一起把它打磨成現在的樣子。這是我的第一個 open source project，謝謝每一位幫忙加星、測試與回報問題的人。這只是開始。
 
 ![Claude Code Organizer Demo](docs/demo.gif)
 
-<sub>Demo 影片由 AI 用 [Pagecast](https://github.com/mcpware/pagecast) 自動錄製</sub>
+<sub>Demo video 由 AI 透過 [Pagecast](https://github.com/mcpware/pagecast) 自動錄製</sub>
 
 ## 問題
 
-Claude Code 每次你做嘢嗰陣都會靜靜雞幫你 create 記憶、技能、MCP config、指令、代理同規則 — 然後就 dump 落你當時所在嘅 scope。你想全域都生效嘅偏好設定？困死咗喺一個 project 入面。一個只係屬於某個 repo 嘅 deploy 技能？漏咗去 global，污染埋你其他 project。
+Claude Code 每次你工作時，都會默默建立記憶、skills、MCP configs、commands、agents 和 rules，然後把它們丟進符合你目前目錄的那個 scope。你希望到處都生效的偏好？被困在某個 project 裡。只屬於單一 repo 的 deploy skill？卻跑到 global，污染其他所有 project。
 
-**呢個唔止係亂 — 仲影響緊你 AI 嘅表現。** 每次 session，Claude 都會 load 當前 scope 加上所有繼承嘅 parent scope 嘅 config 入去你嘅 context window。擺錯位嘅嘢 = 嘥 token、污染 context、降低準確度。一個 Python pipeline 技能坐咗喺 global，結果每次你開 React frontend session 都俾佢 load 埋。重複嘅 MCP entry 會初始化同一個 server 兩次。過期嘅記憶同你而家嘅指示互相矛盾。
+**這不只是雜亂而已，還會直接傷害 AI 的表現。** 每次 session，Claude 都會把目前 scope 的所有設定，以及從 parent scopes 繼承來的內容，一起載入你的 context window。放錯 scope 的項目 = 浪費 tokens、污染 context、降低準確度。放在 global 的 Python pipeline skill，會在你的 React frontend session 裡一起被載入。重複的 MCP entries 會讓同一個 server 初始化兩次。過時的記憶還可能和你現在的指示互相矛盾。
 
-### 「叫 Claude 自己搞啦」
+### 「直接叫 Claude 自己修就好了？」
 
-你可以叫 Claude Code 管理自己嘅 config。但你要嚟嚟回回 — `ls` 一個目錄，`cat` 逐個檔案，自己喺腦入面砌返個全貌。**冇任何一條 command 可以一次過顯示晒所有 scope、所有項目、所有繼承關係。**
+你當然可以叫 Claude Code 管理自己的 config，但你得來來回回地操作：`ls` 一個目錄、`cat` 每一個檔案，再從零碎的文字輸出裡自己拼出全貌。**沒有任何一條 command 可以一次把所有 scopes、所有 items、所有 inheritance 全部攤開。**
 
-### 解決方法：視覺化儀表板
+### 解法：visual dashboard
 
 ```bash
 npx @mcpware/claude-code-organizer
 ```
 
-一條 command。睇晒 Claude 儲咗啲乜 — 按 scope 層級排好。**拖拉搬 scope。** 刪過期記憶。搵重複項目。掌控 Claude 嘅行為設定。
+只要一個 command。你可以看到 Claude 儲存的所有內容，而且會依 scope hierarchy 排好。**把 items 在不同 scopes 之間直接拖放。** 刪掉過時的記憶。找出重複項目。重新掌握真正會影響 Claude 行為的設定。
 
-### 例子：專案 → 全域
+> **首次執行會自動安裝 `/cco` skill**，之後在任何 Claude Code session 只要輸入 `/cco` 就能打開 dashboard，不必再記 `npx` command。
 
-你喺某個 project 入面同 Claude 講「我鍾意 TypeScript + ESM」，但呢個偏好你想全域生效。開儀表板，將嗰條記憶由 Project 拖去 Global。**搞掂。拖一下。**
+### 範例：Project → Global
 
-### 例子：全域 → 專案
+你在某個 project 裡告訴 Claude「我偏好 TypeScript + ESM」，但這個偏好其實應該套用到所有地方。打開 dashboard，把那條記憶從 Project 拖到 Global。**完成。只要拖一次。**
 
-一個 deploy 技能坐咗喺 global，但其實得一個 repo 用得到。拖佢入去嗰個 Project scope — 其他 project 就再見唔到佢。
+### 範例：Global → Project
 
-### 例子：刪過期記憶
+放在 global 的 deploy skill 其實只對某個 repo 有意義。把它拖進那個 Project scope，其他 projects 就不會再看到它。
 
-Claude 會自動記住你隨口講嘅嘢，或者佢*以為*你想記住嘅嘢。一個禮拜之後已經冇用但仲係每次 session 都 load。瀏覽、閱讀、刪除。**你話事 Claude 以為自己知道你啲乜。**
+### 範例：刪除過時記憶
+
+Claude 會自動把你隨口提過的事，或它*以為*你希望記住的事，存成記憶。一週後它們可能早就不重要了，卻仍然會在每次 session 載入。瀏覽、閱讀、刪除。**Claude 以為自己知道你什麼，應該由你決定。**
 
 ---
 
-## 對比
+## 比較
 
-我哋分析咗搵到嘅所有 Claude Code 工具嘅原始碼 — analytics dashboard（9K+ stars）、桌面 app（600+ stars）、VS Code 擴充、TUI session manager、terminal statusline。冇一個有真正嘅 scope 層級 + 拖拉跨 scope 搬移。
+我們分析了所有找得到的 Claude Code tools 原始碼，包括 analytics dashboards (9K+ stars)、desktop apps (600+ stars)、VS Code extensions、TUI session managers 與 terminal statuslines。沒有任何一個提供真正的 scope hierarchy + drag-and-drop cross-scope moves，而且還是 standalone dashboard。
 
-| 功能 | **Claude Code Organizer** | 桌面 App (600+⭐) | VS Code 擴充 | Analytics Dashboard | TUI 工具 |
-|------|:---:|:---:|:---:|:---:|:---:|
-| 真正 scope 層級 (Global > Workspace > Project) | **有** | 冇 | 部分（冇 workspace） | 冇 | 冇 |
-| 拖拉搬移 | **有** | 冇 | 冇 | 冇 | 冇 |
-| 跨 scope 搬移 | **有** | 冇 | 一鍵 | 冇 | 冇 |
-| 每個操作都可以 Undo | **有** | 冇 | 冇 | 冇 | 冇 |
-| 批量操作 | **有** | 冇 | 冇 | 冇 | 冇 |
-| 真正 MCP 伺服器管理 | **有** | 只有 Global | 空殼（得個 icon） | 冇 | 冇 |
-| 指令 + 代理 + 規則 | **有** | 冇 | 冇 | 冇 | 冇 |
-| Session 管理 | **有** | 冇 | 冇 | 有 | 有 |
-| 搜尋 & 篩選 | **有** | 冇 | 有 | 有 | 冇 |
-| MCP 工具（AI 可存取） | **有** | 冇 | 冇 | 冇 | 冇 |
-| 零依賴 | **有** | 冇 (Tauri+React) | 冇 (VS Code) | 冇 (Next.js/FastAPI) | 冇 (Python) |
-| 獨立運行（唔使 IDE） | **有** | 有 | 冇 | 有 | 有 |
+| 功能 | **Claude Code Organizer** | Desktop app (600+⭐) | VS Code extension | Analytics dashboards | TUI tools |
+|---------|:---:|:---:|:---:|:---:|:---:|
+| 真正的 scope hierarchy (Global > Workspace > Project) | **Yes** | No | Partial (no workspace) | No | No |
+| Drag-and-drop moves | **Yes** | No | No | No | No |
+| Cross-scope moves | **Yes** | No | One-click | No | No |
+| 每個操作都能 undo | **Yes** | No | No | No | No |
+| Bulk operations | **Yes** | No | No | No | No |
+| 真正的 MCP server 管理 | **Yes** | Global only | Stub (icon only) | No | No |
+| Commands + Agents + Rules | **Yes** | No | No | No | No |
+| Session 管理 | **Yes** | No | No | Yes | Yes |
+| Search & filter | **Yes** | No | Yes | Yes | No |
+| MCP tools (AI-accessible) | **Yes** | No | No | No | No |
+| Zero dependencies | **Yes** | No (Tauri+React) | No (VS Code) | No (Next.js/FastAPI) | No (Python) |
+| Standalone (no IDE) | **Yes** | Yes | No | Yes | Yes |
 
 ## 功能
 
-- **Scope 分層檢視** — Global > Workspace > Project，層級一目瞭然，附繼承標記
-- **拖拉搬移** — 記憶、技能、指令、代理、規則、MCP 伺服器、計劃，拖一下就換 scope
-- **乜都可以 Undo** — 每個搬移同刪除都有 undo 掣 — 即時還原，包括 MCP JSON entry
-- **批量操作** — 選擇模式：剔多個項目，一次過搬或刪
-- **同類型安全** — 每個類別只能搬去自己嘅目錄 — 記憶去 memory/、技能去 skills/、指令去 commands/ 等等
-- **搜尋 & 篩選** — 即時搜尋所有項目，按類別篩選（零項目嘅 pill 自動收埋去「+N 更多」）
-- **詳情面板** — 撳任何項目睇完整 metadata、內容預覽、檔案路徑，直接用 VS Code 開
-- **Session 檢視器** — 解析對話預覽，有講者標籤、session 標題同 metadata
-- **11 個類別** — 記憶、技能、MCP 伺服器、指令、代理、規則、設定、Hook、Plugin、計劃、Session
-- **打包技能偵測** — 透過 `skills-lock.json` 識別技能嘅來源套件
-- **Claude Code 情境提示** — 「解釋呢個」、「編輯內容」、「編輯指令」、「編輯代理」、「繼續 Session」按鈕，一撳就 copy 去 clipboard
-- **自動隱藏詳情面板** — 未撳項目之前面板收埋，慳返空間
-- **可調大小面板** — 拖分隔線調整側欄、內容區域同詳情面板大小
-- **真・檔案搬移** — 直接動 `~/.claude/` 入面嘅檔案，唔係得個睇字
-- **路徑穿越保護** — 所有檔案 endpoint 都驗證路徑喺 HOME 目錄入面
-- **跨裝置支援** — rename 跨 filesystem 失敗時自動 fallback 去 copy + delete（Docker/WSL）
-- **92 個 E2E 測試** — Playwright 測試套件，覆蓋 filesystem 驗證、安全性（路徑穿越、格式錯誤輸入）同所有 11 個類別
+- **Scope-aware hierarchy** — 以 Global > Workspace > Project 顯示所有 items，並標示 inheritance
+- **Drag-and-drop** — 在不同 scopes 之間移動記憶、skills、commands、agents、rules、MCP servers 和 plans
+- **Undo everything** — 每一次移動和刪除都有 undo button，可立即還原，包含 MCP JSON entries
+- **Bulk operations** — 進入 select mode，一次勾選多個 items，批次移動或刪除
+- **Same-type safety** — 每個 category 只會移動到對應的 directory，記憶到 `memory/`、skills 到 `skills/`、commands 到 `commands/`，依此類推
+- **Search & filter** — 即時搜尋所有 items，依 category 過濾，並支援 smart pill hiding (zero-count pills 會收合成 "+N more")
+- **Detail panel** — 點選任何 item 都能查看完整 metadata、content preview、file path，並直接在 VS Code 開啟
+- **Session inspector** — 解析後的 conversation previews，含 speaker labels、session titles 與 metadata
+- **11 categories** — 記憶、skills、MCP servers、commands、agents、rules、configs、hooks、plugins、plans 和 sessions
+- **Bundled skill detection** — 透過 `skills-lock.json` 依來源 bundle 分組 skills
+- **Contextual Claude Code prompts** — "Explain This"、"Edit Content"、"Edit Command"、"Edit Agent"、"Resume Session" buttons 會直接複製到 clipboard
+- **Auto-hide detail panel** — 在你點選 item 之前，panel 會保持隱藏，讓內容區域最大化
+- **Resizable panels** — 拖曳分隔線調整 sidebar、內容區域與 detail panel 大小
+- **Real file moves** — 真正移動 `~/.claude/` 裡的檔案，不只是 viewer
+- **Path traversal protection** — 所有 file endpoints 都會驗證 path 是否位於 HOME directory 內
+- **Cross-device support** — 當 rename 在不同 filesystems 之間失敗時，會自動 fallback 成 copy+delete (Docker/WSL)
+- **92 E2E tests** — Playwright test suite 涵蓋 filesystem verification、安全性 (path traversal、malformed input) 與全部 11 categories
 
-## 點解要用視覺化儀表板？
+## 為什麼要用 visual dashboard？
 
-Claude Code 用 CLI 都可以 list 同搬 file — 但你要同自己嘅 config 玩 20 條問題。儀表板俾你**一眼睇晒：**
+Claude Code 本來就能透過 CLI 列出和移動檔案，但你會像在和自己的 config 玩 20 問。dashboard 讓你**一眼看完整體：**
 
-| 你想做嘅嘢 | 問 Claude | 視覺化儀表板 |
-|-----------|:---------:|:----------:|
-| **一次過睇晒所有 scope** | `ls` 逐個目錄，自己砌返 | Scope tree，一眼搞掂 |
-| **我個 project 而家 load 咗啲乜？** | 行幾條 command，希望冇漏 | 開 project → 睇晒成條繼承鏈 |
-| **搬嘢去其他 scope** | 搵出 encoded path，手動 `mv` | 拖拉加確認 |
-| **睇 config 內容** | 逐個 `cat` 檔案 | 撳一下 → 側邊面板 |
-| **搵重複 / 過期項目** | `grep` 一堆古怪目錄 | 搜尋 + 分類篩選 |
-| **清理冇用嘅記憶** | 自己 figure out 刪邊個 | 瀏覽、閱讀、原地刪除 |
+| 你需要做什麼 | Ask Claude | Visual Dashboard |
+|---------------|:-----------:|:----------------:|
+| **一次看完所有 scopes** | `ls` 一個目錄一個目錄看，再自己拼起來 | Scope tree，一眼看懂 |
+| **我目前的 project 會載入什麼？** | 跑好幾條 commands，還得祈禱沒有漏掉 | 打開 project，直接看到完整 inheritance chain |
+| **在 scopes 之間移動 items** | 找出編碼後的 paths，再手動 `mv` | Drag-and-drop 並附確認 |
+| **閱讀 config 內容** | 每個檔案逐一 `cat` | 點一下 → side panel |
+| **找出重複或過時項目** | 對著一堆難讀的 directories 跑 `grep` | Search + filter by category |
+| **清理沒在用的記憶** | 自己判斷該刪哪些 files | 直接瀏覽、閱讀、原地刪除 |
 
 ## 快速開始
 
-### 方式 1：npx（免安裝）
+### 選項 1：npx（不需安裝）
 
 ```bash
 npx @mcpware/claude-code-organizer
 ```
 
-### 方式 2：全域安裝
+### 選項 2：Global install
 
 ```bash
 npm install -g @mcpware/claude-code-organizer
 claude-code-organizer
 ```
 
-### 方式 3：叫 Claude 幫你跑
+### 選項 3：Ask Claude
 
-直接貼呢段話俾 Claude Code：
+把這段貼進 Claude Code:
 
-> 幫我跑 `npx @mcpware/claude-code-organizer` — 呢個係管理 Claude Code 設定嘅儀表板。跑起嚟之後話我知個 URL。
+> 執行 `npx @mcpware/claude-code-organizer`，這是一個用來管理 Claude Code 設定的 dashboard。準備好之後把 URL 告訴我。
 
-開 `http://localhost:3847`，直接操作你本機嘅 `~/.claude/` 目錄。
+會在 `http://localhost:3847` 打開 dashboard，直接操作你實際的 `~/.claude/` 目錄。
 
-## 管理範圍
+## 它能管理什麼
 
-| 類型 | 檢視 | 搬移 | 刪除 | 掃描位置 |
-|------|:----:|:----:|:----:|:--------:|
-| 記憶（feedback、user、project、reference） | 有 | 有 | 有 | Global + Project |
-| 技能（有打包偵測） | 有 | 有 | 有 | Global + Project |
-| MCP 伺服器 | 有 | 有 | 有 | Global + Project |
-| 指令（slash commands） | 有 | 有 | 有 | Global + Project |
-| 代理（subagents） | 有 | 有 | 有 | Global + Project |
-| 規則（project 限制） | 有 | 有 | 有 | Global + Project |
-| 計劃 | 有 | 有 | 有 | Global + Project |
-| Session | 有 | — | 有 | 只有 Project |
-| 設定（CLAUDE.md、settings.json） | 有 | 鎖住 | — | Global + Project |
-| Hook | 有 | 鎖住 | — | Global + Project |
-| Plugin | 有 | 鎖住 | — | 只有 Global |
+| 類型 | 檢視 | 移動 | 刪除 | 掃描範圍 |
+|------|:----:|:----:|:------:|:----------:|
+| 記憶 (feedback, user, project, reference) | Yes | Yes | Yes | Global + Project |
+| Skills (with bundle detection) | Yes | Yes | Yes | Global + Project |
+| MCP Servers | Yes | Yes | Yes | Global + Project |
+| Commands (slash commands) | Yes | Yes | Yes | Global + Project |
+| Agents (subagents) | Yes | Yes | Yes | Global + Project |
+| Rules (project constraints) | Yes | Yes | Yes | Global + Project |
+| Plans | Yes | Yes | Yes | Global + Project |
+| Sessions | Yes | — | Yes | Project only |
+| Config (CLAUDE.md, settings.json) | Yes | Locked | — | Global + Project |
+| Hooks | Yes | Locked | — | Global + Project |
+| Plugins | Yes | Locked | — | Global only |
 
-## Scope 層級
+## Scope Hierarchy
 
 ```
-Global                        <- 到處生效
-  公司 (Workspace)             <- 底下所有子專案繼承
-    公司Repo1                  <- 僅限呢個專案
-    公司Repo2                  <- 僅限呢個專案
-  Side Project (Project)       <- 獨立專案
-  Docs (Project)               <- 獨立專案
+Global                       <- applies everywhere
+  Company (workspace)        <- applies to all sub-projects
+    CompanyRepo1             <- project-specific
+    CompanyRepo2             <- project-specific
+  SideProjects (project)     <- independent project
+  Documents (project)        <- independent project
 ```
 
-子 scope 會自動繼承 parent scope 嘅記憶、技能、MCP 伺服器、指令、代理同規則。
+子 scopes 會繼承 parent scope 的記憶、skills、MCP servers、commands、agents 和 rules。
 
-## 運作原理
+## 運作方式
 
-1. **掃描** `~/.claude/` — 搵出所有專案、記憶、技能、MCP 伺服器、指令、代理、規則、Hook、Plugin、計劃同 Session
-2. **解析 scope 層級** — 由 filesystem 路徑推導出 parent-child 關係
-3. **畫儀表板** — 三欄 layout：sidebar scope tree、按類別分組嘅項目、詳情面板連內容預覽
-4. **處理搬移** — 拖拉或撳「移動到…」，server 做完安全檢查先搬檔案，支援 undo
-5. **處理刪除** — 刪除有 undo、批量刪除、session 清理
+1. **Scans** `~/.claude/` — 掃描所有 projects、記憶、skills、MCP servers、commands、agents、rules、hooks、plugins、plans 和 sessions
+2. **Resolves scope hierarchy** — 從 filesystem paths 判斷 parent-child relationships
+3. **Renders dashboard** — 三欄 layout: sidebar scope tree、依 category 分組的 items，以及帶 content preview 的 detail panel
+4. **Handles moves** — 透過拖曳或點擊 "Move to..." 來移動，實際在磁碟上搬檔案，並附帶 safety checks 與 undo support
+5. **Handles deletes** — 支援刪除後 undo、bulk delete 與 session cleanup
 
 ## 平台支援
 
-| 平台 | 狀態 |
-|------|:----:|
-| Ubuntu / Linux | 已支援 |
-| macOS (Intel + Apple Silicon) | 已支援（社群喺 Sequoia M3 測試過） |
-| Windows | 暫未支援 |
-| WSL | 應該冇問題（未測試） |
+| Platform | Status |
+|----------|:------:|
+| Ubuntu / Linux | Supported |
+| macOS (Intel + Apple Silicon) | Supported (community-tested on Sequoia M3) |
+| Windows | Not yet |
+| WSL | Should work (untested) |
 
 ## 專案結構
 
 ```
 src/
-  scanner.mjs       # 掃描 ~/.claude/ — 11 個類別，純資料，冇副作用
-  mover.mjs         # 喺 scope 之間搬 / 刪檔案 — 安全檢查 + undo 支援
-  server.mjs        # HTTP 伺服器 — 8 個 REST endpoint
-  mcp-server.mjs    # MCP 伺服器 — 4 個工具俾 AI client 用（scan、move、delete、destinations）
+  scanner.mjs       # Scans ~/.claude/ — 11 categories, pure data, no side effects
+  mover.mjs         # Moves/deletes files between scopes — safety checks + undo support
+  server.mjs        # HTTP server — 8 REST endpoints
+  mcp-server.mjs    # MCP server — 4 tools for AI clients (scan, move, delete, destinations)
   ui/
-    index.html       # 三欄 layout，可調大小分隔線
-    style.css        # 所有樣式（隨便改，唔會 break 邏輯）
-    app.js           # 前端：拖拉、搜尋、篩選、批量操作、undo、session 預覽
+    index.html       # Three-panel layout with resizable dividers
+    style.css        # All styling (edit freely, won't break logic)
+    app.js           # Frontend: drag-drop, search, filters, bulk ops, undo, session preview
 bin/
-  cli.mjs            # 入口（--mcp flag 開 MCP 伺服器模式）
+  cli.mjs            # Entry point (--mcp flag for MCP server mode)
 ```
 
-前端同後端完全分開。改 `src/ui/` 嘅檔案唔會影響任何邏輯。
+Frontend 和 backend 完全分離。只要修改 `src/ui/` 裡的檔案，就能調整外觀而不用碰任何邏輯。
 
 ## API
 
-儀表板背後有 REST API：
+這個 dashboard 背後是一組 REST API：
 
-| Endpoint | Method | 描述 |
-|----------|--------|------|
-| `/api/scan` | GET | 掃描所有自訂項目，回傳 scope + 項目 + 計數 |
-| `/api/move` | POST | 搬一個項目去其他 scope（支援類別/名稱消歧義） |
-| `/api/delete` | POST | 刪除項目（記憶、技能、MCP、指令、代理、規則、計劃、session） |
-| `/api/restore` | POST | 還原已刪除嘅檔案（undo 支援） |
-| `/api/restore-mcp` | POST | 還原已刪除嘅 MCP 伺服器 JSON entry（undo 支援） |
-| `/api/destinations` | GET | 攞一個項目嘅有效搬移目的地 |
-| `/api/file-content` | GET | 讀檔案內容俾詳情面板預覽 |
-| `/api/session-preview` | GET | 解析 JSONL session 做可讀對話，有講者標籤 |
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/scan` | GET | 掃描所有自訂內容，回傳 scopes、items 和 counts |
+| `/api/move` | POST | 將 item 移動到不同 scope（支援 category/name disambiguation） |
+| `/api/delete` | POST | 刪除 item（memory、skill、MCP、command、agent、rule、plan、session） |
+| `/api/restore` | POST | 還原已刪除的檔案（undo support） |
+| `/api/restore-mcp` | POST | 還原已刪除的 MCP server JSON entry（undo support） |
+| `/api/destinations` | GET | 取得 item 可移動到的有效 destinations |
+| `/api/file-content` | GET | 讀取檔案內容，提供 detail panel preview |
+| `/api/session-preview` | GET | 將 JSONL session 解析成可閱讀的對話，包含 speaker labels |
 
-## 授權
+## Roadmap
+
+| Feature | Status | Description |
+|---------|:------:|-------------|
+| **Config Export/Backup** | 🔜 Next | 一鍵把所有掃描到的檔案匯出到備份資料夾，建立你自己的 snapshot |
+| **Skill Quality Scoring** | 📋 Planned | 從生態系中 5,000+ 個 skills 裡評分並凸顯最好的項目，不再靠猜 |
+| **Security Audit** | 📋 Planned | 掃描你的 `.claude/`，找出高風險權限、外洩 secrets 或可疑 hooks |
+| **Cross-Harness Portability** | 📋 Planned | 在 Claude Code、Cursor、Codex、Gemini CLI 之間轉換 skills/configs |
+| **Cost Tracker** | 💡 Exploring | 追蹤每個 session、每個 project 的 token 使用量與成本 |
+| **Diff View** | 💡 Exploring | 比較不同 scopes 之間，或不同 snapshots 之間的 configs |
+
+有功能想法嗎？[Open an issue](https://github.com/mcpware/claude-code-organizer/issues)。
+
+## License
 
 MIT
 
-## 更多 @mcpware 嘅嘢
+## 更多來自 @mcpware 的專案
 
-| 專案 | 做咩嘅 | 安裝 |
-|------|--------|------|
-| **[Instagram MCP](https://github.com/mcpware/instagram-mcp)** | 23 個 Instagram Graph API 工具 — 貼文、留言、DM、限動、分析 | `npx @mcpware/instagram-mcp` |
-| **[UI Annotator](https://github.com/mcpware/ui-annotator-mcp)** | 喺任何網頁上面加懸浮標籤 — AI 可以用名稱指定元素 | `npx @mcpware/ui-annotator` |
-| **[Pagecast](https://github.com/mcpware/pagecast)** | 用 MCP 錄瀏覽器 session 做 GIF 或影片 | `npx @mcpware/pagecast` |
-| **[LogoLoom](https://github.com/mcpware/logoloom)** | AI logo 設計 → SVG → 完整品牌套件匯出 | `npx @mcpware/logoloom` |
-
+| Project | 功能 | Install |
+|---------|---|---|
+| **[Instagram MCP](https://github.com/mcpware/instagram-mcp)** | 23 個 Instagram Graph API tools，可處理貼文、留言、DM、限時動態與 analytics | `npx @mcpware/instagram-mcp` |
+| **[UI Annotator](https://github.com/mcpware/ui-annotator-mcp)** | 在任何網頁上顯示 hover labels，讓 AI 可以用名稱指認元素 | `npx @mcpware/ui-annotator` |
+| **[Pagecast](https://github.com/mcpware/pagecast)** | 透過 MCP 將 browser sessions 錄成 GIF 或影片 | `npx @mcpware/pagecast` |
+| **[LogoLoom](https://github.com/mcpware/logoloom)** | AI logo 設計 → SVG → 匯出完整 brand kit | `npx @mcpware/logoloom` |
 ## 作者
 
-[ithiria894](https://github.com/ithiria894) — 替 Claude Code 生態系打造工具。
+[ithiria894](https://github.com/ithiria894) — 為 Claude Code 生態系打造工具。
 
 [![claude-code-organizer MCP server](https://glama.ai/mcp/servers/mcpware/claude-code-organizer/badges/card.svg)](https://glama.ai/mcp/servers/mcpware/claude-code-organizer)
