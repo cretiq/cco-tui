@@ -26,20 +26,18 @@ This is a real project directory after two weeks of use:
 
 ![Context Budget](docs/CB.png)
 
-**If you start a Claude Code session under this directory, 69.2K tokens are already loaded before you start any conversation.** That's 34.6% of your 200K context window — gone before you type a single character. Estimated cost just for this overhead: $1.04 USD per session on Opus, $0.21 on Sonnet.
+**If you start a Claude Code session under this directory, ~19K tokens are immediately loaded into context, with another ~60K deferred for on-demand MCP tools.** On a 200K context window, that's already ~10% gone before you type a single character — and up to ~40% if all MCP tools get loaded during the session.
 
-The remaining 65.4% is shared between your messages, Claude's responses, and tool results before context compression kicks in. The fuller the context, the less accurate Claude becomes — an effect known as **context rot**.
+The Context Budget panel breaks this down:
 
-Where does 69.2K come from? It includes everything we can **measure offline** — your CLAUDE.md, memories, skills, MCP server definitions, settings, hooks, rules, commands, and agents — tokenized per-item. Plus an **estimated system overhead** (~21K tokens) for the immutable scaffold Claude Code loads on every API call: the system prompt, 23+ built-in tool definitions, and MCP tool schemas.
+- **Always Loaded** — CLAUDE.md, MEMORY.md (first 200 lines), skill descriptions, rules, system prompt and tools. These are in your context every single request.
+- **Deferred** — MCP tool schemas that Claude loads on-demand via ToolSearch. Not in context until Claude needs a specific tool — but they add up fast if you have many MCP servers.
 
-And that's just what we can count. It does **not** include **runtime injections** — tokens Claude Code silently adds during a session:
+The fuller the context, the less accurate Claude becomes — an effect known as **context rot**. And these numbers only cover what we can measure offline. During a session, Claude Code silently adds more:
 
-- **Rule re-injection** — all your rule files are re-injected into context after every tool call. After ~30 tool calls, this alone can consume ~46% of your context window
-- **File change diffs** — when a file you've read or written are modified externally (e.g. by a linter), the full diff is injected as a hidden system-reminder
-- **System reminders** — malware warnings, token nudges, and other hidden injections appended to messages
-- **Conversation history** — your messages, Claude's responses, and all tool results are resent on every API call
-
-So before you even start typing, the real usage is already well above 69.2K. You just can't see it.
+- **Rule re-injection** — all rule files re-injected after every tool call. After ~30 calls, this alone can consume ~46% of context
+- **File change diffs** — linter changes a file you read? Full diff injected as hidden system-reminder
+- **Conversation history** — your messages + Claude's responses + all tool results resent on every API call
 
 ### Problem 2: Your context is contaminated
 
