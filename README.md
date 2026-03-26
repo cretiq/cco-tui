@@ -27,12 +27,12 @@ Claude Code has a scope hierarchy: **Global → Workspace → Project**. Anythin
 The problem: **Claude doesn't care about scope when it creates things.** It dumps everything into whatever scope matches your current directory. Over time, this turns into a mess:
 
 **Skills in the wrong scope affect the wrong projects:**
-- You build a deploy skill while working in your backend repo. It lands in that project's scope. But you want it everywhere — it should be in Global. Without moving it, your other projects can't see it.
+- You build a deploy skill while working in your backend repo. It lands in that project's scope. But you want it everywhere — it should be in Global. Without moving it, your other projects can't see it. You end up creating another one in other projects.
 - A Python-specific testing skill sitting in Global gets loaded into every React frontend session. It wastes tokens and confuses Claude with irrelevant instructions.
 
 **Memories pile up and duplicate:**
 - You tell Claude "always use ESM imports" while inside a project. That memory is trapped in that project scope — your other projects don't get it.
-- Claude creates 3 separate memories about Slack updates, all saying the same thing. Each one loads every session.
+- My experience: Claude created 3 separate memories about Slack updates, all saying the same thing. Each one loads every session.
 
 **MCP servers silently reinstall across scopes:**
 
