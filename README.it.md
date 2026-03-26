@@ -23,7 +23,7 @@ Claude Code precarica automaticamente tutti i file di configurazione all'avvio â
 
 Ecco un progetto reale dopo due settimane di utilizzo:
 
-![Context Budget](docs/CB.png)
+![Context Budget](docs/cptoken.png)
 
 **69.2K token â€” il 34.6% della tua context window da 200K, spariti prima che tu digiti un singolo carattere.** Costo stimato solo per questo overhead: Opus $1.04 USD / Sonnet $0.21 USD per sessione.
 

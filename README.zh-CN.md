@@ -20,7 +20,7 @@ Claude Code 启动时会自动预加载一堆配置文件 — CLAUDE.md、记忆
 
 看一个真实项目，用了两周之后是这样的：
 
-![Context Budget](docs/CB.png)
+![Context Budget](docs/cptoken.png)
 
 **69.2K tokens — 直接占掉你 200K context window 的 34.6%。** 一个字都没打就没了。每次 session 光这些 overhead 的成本：Opus $1.04 USD，Sonnet $0.21 USD。
 

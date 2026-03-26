@@ -23,7 +23,7 @@ Claude Code otomatis memuat semua file konfigurasi saat startup — CLAUDE.md, m
 
 Ini contoh project nyata setelah dua minggu dipakai:
 
-![Context Budget](docs/CB.png)
+![Context Budget](docs/cptoken.png)
 
 **69.2K tokens — 34.6% dari context window 200K kamu, hilang sebelum mengetik satu karakter pun.** Estimasi biaya overhead ini saja: Opus $1.04 USD / Sonnet $0.21 USD per session.
 

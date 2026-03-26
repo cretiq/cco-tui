@@ -23,7 +23,7 @@ O Claude Code carrega automaticamente todos os arquivos de configuração na ini
 
 Olha um projeto real depois de duas semanas de uso:
 
-![Context Budget](docs/CB.png)
+![Context Budget](docs/cptoken.png)
 
 **69.2K tokens — 34.6% da sua context window de 200K, sumiu antes de você digitar um caractere.** Custo estimado só desse overhead: Opus $1.04 USD / Sonnet $0.21 USD por sessão.
 

@@ -23,7 +23,7 @@ Claude Code başlarken tüm config dosyalarını otomatik yüklüyor — CLAUDE.
 
 İki haftalık gerçek bir projeye bak:
 
-![Context Budget](docs/CB.png)
+![Context Budget](docs/cptoken.png)
 
 **69.2K token — 200K context window'unun %34.6'sı, tek karakter yazmadan uçmuş.** Bu overhead'in tahmini maliyeti: Opus $1.04 USD / Sonnet $0.21 USD (oturum başına).
 

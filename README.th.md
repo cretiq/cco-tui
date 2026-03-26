@@ -23,7 +23,7 @@ Claude Code โหลด config ทั้งหมดอัตโนมัติ
 
 นี่คือ project จริงหลังใช้งานสองสัปดาห์:
 
-![Context Budget](docs/CB.png)
+![Context Budget](docs/cptoken.png)
 
 **69.2K tokens — 34.6% ของ context window 200K หายไปก่อนพิมพ์แม้แต่ตัวเดียว** ค่าใช้จ่ายโดยประมาณของ overhead นี้: Opus $1.04 USD / Sonnet $0.21 USD ต่อ session
 

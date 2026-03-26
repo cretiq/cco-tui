@@ -24,9 +24,9 @@ Two things happen silently every time you use Claude Code — and neither one is
 
 This is a real project directory after two weeks of use:
 
-![Context Budget](docs/CB.png)
+![Context Budget](docs/cptoken.png)
 
-**If you start a Claude Code session under this directory, ~19K tokens are immediately loaded into context, with another ~60K deferred for on-demand MCP tools.** On a 200K context window, that's already ~10% gone before you type a single character — and up to ~40% if all MCP tools get loaded during the session.
+**If you start a Claude Code session under this directory, 21.9K tokens are immediately loaded into context, with another 115.4K deferred for on-demand MCP tools.** On a 200K context window, that's 11% gone before you type a single character — and grows as Claude invokes MCP tools during the session.
 
 The Context Budget panel breaks this down:
 
