@@ -25,20 +25,18 @@ Claude Code başlarken tüm config dosyalarını otomatik yüklüyor — CLAUDE.
 
 ![Context Budget](docs/cptoken.png)
 
-**69.2K token — 200K context window'unun %34.6'sı, tek karakter yazmadan uçmuş.** Bu overhead'in tahmini maliyeti: Opus $1.04 USD / Sonnet $0.21 USD (oturum başına).
+**Bu dizinde bir Claude Code oturumu başlatırsan, 21.9K token anında context'e yüklenir; bir de 115.4K daha on-demand MCP tools için deferred olarak bekler.** 200K context window üzerinden, daha tek karakter yazmadan %11'i gitmiş olur — ve oturum sırasında Claude MCP tools çağırdıkça artmaya devam eder.
 
-Kalan %65.4'ü mesajların, Claude'un yanıtları ve tool results paylaşıyor. Context ne kadar dolarsa Claude o kadar yanlış yapıyor — buna **context rot** deniyor.
+Context Budget paneli şöyle ayrıştırır:
 
-69.2K'nın kaynağı: offline ölçülebilen tüm config dosyalarının token toplamı + tahmini sistem overhead'i (~21K token) — system prompt, 23+ yerleşik tool tanımı ve MCP tool schemas. Bunlar her API call'da yükleniyor.
+- **Always Loaded** — CLAUDE.md, MEMORY.md index, skill descriptions, rules, system prompt ve tools. Bunlar her request'te context'inin içinde.
+- **Deferred** — Claude'un ToolSearch üzerinden ihtiyaç duydukça yüklediği MCP tool schemas. Claude o tool'a ihtiyaç duyana kadar context'e girmez — ama çok sayıda MCP server'ın varsa hızla birikir.
 
-Ama bu sadece **statik** kısım. Şu **runtime injections** dahil değil:
+Context ne kadar dolarsa Claude o kadar yanlış yapıyor — buna **context rot** deniyor. Üstelik bu rakamlar sadece offline ölçebildiklerimizi kapsıyor. Oturum sırasında Claude Code sessizce daha fazlasını ekler:
 
 - **Rule re-injection** — tüm rule dosyaların her tool call'dan sonra context'e tekrar enjekte ediliyor. ~30 tool call sonra, tek başına context window'un ~%46'sını yiyebilir
-- **File change diffs** — okuduğun veya yazdığın bir dosya dışarıdan değiştirilirse (ör. linter), tüm diff gizli system-reminder olarak enjekte ediliyor
-- **System reminders** — malware uyarıları, token hatırlatmaları ve diğer gizli injection'lar
+- **File change diffs** — linter okuduğun bir dosyayı değiştirdi mi? Tüm diff gizli system-reminder olarak enjekte ediliyor
 - **Conversation history** — mesajların, Claude'un yanıtları ve tüm tool sonuçları her API call'da tekrar gönderiliyor
-
-Yani daha yazmaya başlamadan gerçek kullanım çoktan 69.2K'yı aşmış oluyor. Sadece göremiyorsun.
 
 ### Config'lerin yanlış scope'ta
 

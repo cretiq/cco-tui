@@ -25,20 +25,18 @@ Claude Code โหลด config ทั้งหมดอัตโนมัติ
 
 ![Context Budget](docs/cptoken.png)
 
-**69.2K tokens — 34.6% ของ context window 200K หายไปก่อนพิมพ์แม้แต่ตัวเดียว** ค่าใช้จ่ายโดยประมาณของ overhead นี้: Opus $1.04 USD / Sonnet $0.21 USD ต่อ session
+**ถ้าเปิด session Claude Code ใน directory นี้ 21.9K tokens จะถูกโหลดเข้า context ทันที พร้อมอีก 115.4K ที่ deferred ไว้สำหรับ on-demand MCP tools** จาก context window 200K นั่นคือ 11% หายไปก่อนพิมพ์แม้แต่ตัวเดียว — และจะเพิ่มขึ้นเรื่อย ๆ เมื่อ Claude เรียกใช้ MCP tools ระหว่าง session
 
-65.4% ที่เหลือต้องแบ่งกันระหว่างข้อความ, คำตอบของ Claude และ tool results ยิ่ง context เต็มเท่าไหร่ Claude ก็ยิ่งไม่แม่นยำ เรียกว่า **context rot**
+Context Budget panel แสดงรายละเอียดดังนี้:
 
-69.2K มาจากไหน? คือผลรวม token ของ config files ทั้งหมดที่วัดแบบ offline ได้ บวกกับ system overhead โดยประมาณ (~21K tokens) — system prompt, 23+ tool definitions ในตัว และ MCP tool schemas ที่โหลดทุก API call
+- **Always Loaded** — CLAUDE.md, MEMORY.md index, skill descriptions, rules, system prompt และ tools สิ่งเหล่านี้อยู่ใน context ทุก request
+- **Deferred** — MCP tool schemas ที่ Claude โหลดแบบ on-demand ผ่าน ToolSearch ยังไม่เข้า context จนกว่า Claude จะต้องการ tool นั้น — แต่ถ้ามี MCP servers เยอะ สะสมกันเร็วมาก
 
-แต่นี่เป็นแค่ส่วน**คงที่** **Runtime injections** ต่อไปนี้ยังไม่ได้นับรวม:
+ยิ่ง context เต็มเท่าไหร่ Claude ก็ยิ่งไม่แม่นยำ เรียกว่า **context rot** และตัวเลขเหล่านี้เป็นแค่ส่วนที่วัดแบบ offline ได้ ระหว่าง session Claude Code ยังเงียบ ๆ เพิ่มอีก:
 
 - **Rule re-injection** — rule files ทั้งหมดถูกฉีดกลับเข้า context หลังทุก tool call หลัง ~30 tool calls แค่อันนี้ก็กิน ~46% ของ context window ได้
-- **File change diffs** — ถ้าไฟล์ที่อ่านหรือเขียนถูกแก้จากข้างนอก (เช่น linter) diff ทั้งหมดถูกฉีดเป็น system-reminder ที่ซ่อนอยู่
-- **System reminders** — คำเตือน malware, token reminders และ injections ซ่อนอื่น ๆ
+- **File change diffs** — linter แก้ไฟล์ที่คุณอ่าน? diff ทั้งหมดถูกฉีดเป็น system-reminder ที่ซ่อนอยู่
 - **Conversation history** — ข้อความ, คำตอบของ Claude และ tool results ทั้งหมดถูกส่งซ้ำทุก API call
-
-ดังนั้นก่อนที่คุณจะเริ่มพิมพ์ การใช้จริงก็เกิน 69.2K ไปมากแล้ว แค่มองไม่เห็น
 
 ### Config อยู่ผิด scope
 

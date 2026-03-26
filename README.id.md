@@ -25,20 +25,18 @@ Ini contoh project nyata setelah dua minggu dipakai:
 
 ![Context Budget](docs/cptoken.png)
 
-**69.2K tokens — 34.6% dari context window 200K kamu, hilang sebelum mengetik satu karakter pun.** Estimasi biaya overhead ini saja: Opus $1.04 USD / Sonnet $0.21 USD per session.
+**Kalau kamu buka session Claude Code di direktori ini, 21.9K tokens langsung masuk context, plus 115.4K lagi di-defer untuk on-demand MCP tools.** Dari context window 200K, 11% sudah terpakai sebelum mengetik satu karakter pun — dan terus bertambah saat Claude memanggil MCP tools selama session.
 
-Sisa 65.4% harus dibagi antara pesan kamu, jawaban Claude, dan tool results. Makin penuh context-nya, makin nggak akurat Claude — ini yang disebut **context rot**.
+Panel Context Budget memecahnya begini:
 
-69.2K itu dari mana? Total token dari semua file config yang bisa diukur offline, ditambah estimasi system overhead (~21K tokens) — system prompt, 23+ definisi tool bawaan, dan MCP tool schemas yang dimuat setiap API call.
+- **Always Loaded** — CLAUDE.md, MEMORY.md index, skill descriptions, rules, system prompt dan tools. Ini ada di context kamu setiap request.
+- **Deferred** — MCP tool schemas yang Claude muat on-demand lewat ToolSearch. Belum masuk context sampai Claude butuh tool tertentu — tapi kalau kamu punya banyak MCP servers, akumulasinya cepat.
 
-Tapi itu baru bagian **statis**-nya. **Runtime injections** berikut ini belum termasuk sama sekali:
+Makin penuh context-nya, makin nggak akurat Claude — ini yang disebut **context rot**. Dan angka-angka di atas cuma yang bisa diukur offline. Selama session, Claude Code diam-diam nambah lagi:
 
 - **Rule re-injection** — semua file rule kamu di-inject ulang ke context setelah setiap tool call. Setelah ~30 tool call, ini saja bisa makan ~46% context window
-- **File change diffs** — kalau file yang kamu baca atau tulis diubah dari luar (misal oleh linter), seluruh diff di-inject sebagai system-reminder tersembunyi
-- **System reminders** — peringatan malware, pengingat token, dan injeksi tersembunyi lainnya
+- **File change diffs** — linter mengubah file yang kamu baca? Seluruh diff di-inject sebagai system-reminder tersembunyi
 - **Conversation history** — pesan kamu, jawaban Claude, dan semua tool results dikirim ulang di setiap API call
-
-Jadi sebelum kamu mulai mengetik, pemakaian sebenarnya sudah jauh di atas 69.2K. Kamu cuma nggak bisa lihat.
 
 ### Konfigurasi nyasar di scope yang salah
 

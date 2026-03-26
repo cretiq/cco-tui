@@ -28,20 +28,18 @@ Claude Code 啟動時會自動預載所有設定檔 — CLAUDE.md、記憶、ski
 
 ![Context Budget](docs/cptoken.png)
 
-**69.2K tokens — 佔你 200K context window 的 34.6%，還沒輸入一個字就沒了。** 每個 session 光是這些 overhead 的成本：Opus $1.04 USD，Sonnet $0.21 USD。
+**在這個目錄下啟動 Claude Code session，21.9K tokens 會立即載入 context，另外還有 115.4K 是延遲載入的 on-demand MCP tools。** 以 200K context window 來說，還沒輸入一個字就用掉 11% — 而且 Claude 在 session 中呼叫 MCP tools 時會持續增加。
 
-剩下的 65.4% 要跟你的對話、Claude 的回覆、tool results 共用空間。Context 越滿，Claude 越不準確 — 這就是所謂的 **context rot**。
+Context Budget 面板的拆解：
 
-69.2K 怎麼來的？就是所有能離線測量的 config 檔案 token 加總，再加上估算的系統 overhead（~21K tokens）— system prompt、23+ 個內建 tool 定義、MCP tool schemas，每次 API call 都會載入。
+- **Always Loaded** — CLAUDE.md、MEMORY.md index、skill descriptions、rules、system prompt 和 tools。這些每次 request 都在你的 context 裡。
+- **Deferred** — MCP tool schemas，Claude 透過 ToolSearch 按需載入。在 Claude 需要某個 tool 之前不會進入 context — 但如果你有很多 MCP servers，加起來很可觀。
 
-但這還只是**靜態**的部分。以下這些 **runtime injections** 完全沒有算進去：
+Context 越滿，Claude 越不準確 — 這就是所謂的 **context rot**。而且這些數字只涵蓋我們能離線量測的部分。Session 期間，Claude Code 還會悄悄加入更多：
 
 - **Rule re-injection** — 所有 rule 檔案在每次 tool call 之後都會重新注入 context。大約 30 次 tool call 之後，光這一項就能佔掉 ~46% context window
-- **File change diffs** — 你讀過或寫過的檔案被外部修改（例如 linter），整個 diff 會作為隱藏的 system-reminder 注入
-- **System reminders** — malware 警告、token 提醒等隱藏 injections
+- **File change diffs** — linter 改了你讀過的檔案？整個 diff 會作為隱藏的 system-reminder 注入
 - **Conversation history** — 你的訊息、Claude 的回覆和所有 tool results 每次 API call 都會重新發送
-
-所以你還沒開始輸入，實際用量就已經遠超 69.2K。你只是看不到。
 
 ### Config 散落在錯誤的 scope
 

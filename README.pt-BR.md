@@ -25,20 +25,18 @@ Olha um projeto real depois de duas semanas de uso:
 
 ![Context Budget](docs/cptoken.png)
 
-**69.2K tokens — 34.6% da sua context window de 200K, sumiu antes de você digitar um caractere.** Custo estimado só desse overhead: Opus $1.04 USD / Sonnet $0.21 USD por sessão.
+**Se você iniciar uma sessão de Claude Code neste diretório, 21.9K tokens são carregados imediatamente no contexto, com outros 115.4K diferidos para MCP tools sob demanda.** Numa context window de 200K, isso é 11% consumido antes de digitar um caractere — e cresce conforme Claude invoca MCP tools durante a sessão.
 
-Os 65.4% restantes são disputados pelas suas mensagens, as respostas do Claude e os tool results. Quanto mais cheio o contexto, menos preciso o Claude fica — o chamado **context rot**.
+O painel Context Budget detalha assim:
 
-De onde vêm os 69.2K? É a soma dos tokens de todos os arquivos de config mensuráveis offline, mais um overhead de sistema estimado (~21K tokens) — system prompt, 23+ definições de tools embutidas e MCP tool schemas, carregados em toda API call.
+- **Always Loaded** — CLAUDE.md, MEMORY.md index, skill descriptions, rules, system prompt e tools. Estão no seu contexto em toda request.
+- **Deferred** — MCP tool schemas que Claude carrega sob demanda via ToolSearch. Não entram no contexto até Claude precisar de um tool específico — mas se você tem muitos MCP servers, acumulam rápido.
 
-Mas isso é só a parte **estática**. Estas **runtime injections** não estão incluídas:
+Quanto mais cheio o contexto, menos preciso o Claude fica — o chamado **context rot**. E esses números cobrem apenas o que podemos medir offline. Durante uma sessão, Claude Code adiciona mais silenciosamente:
 
 - **Rule re-injection** — todos os seus arquivos de rules são reinjetados no contexto após cada tool call. Após ~30 tool calls, só isso pode consumir ~46% da context window
-- **File change diffs** — quando um arquivo que você leu ou escreveu é modificado externamente (ex: linter), o diff completo é injetado como system-reminder oculto
-- **System reminders** — avisos de malware, lembretes de tokens e outras injeções ocultas
+- **File change diffs** — o linter alterou um arquivo que você leu? O diff completo é injetado como system-reminder oculto
 - **Conversation history** — suas mensagens, as respostas do Claude e todos os tool results são reenviados em cada API call
-
-Então antes mesmo de você começar a digitar, o uso real já está bem acima de 69.2K. Você só não vê.
 
 ### Suas configs estão no scope errado
 
