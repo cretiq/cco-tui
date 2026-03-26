@@ -8,9 +8,9 @@
 [![Node.js](https://img.shields.io/badge/node-%3E%3D20-brightgreen)](https://nodejs.org)
 English | [简体中文](README.zh-CN.md) | [繁體中文](README.zh-TW.md) | [廣東話](README.zh-HK.md) | [日本語](README.ja.md) | [한국어](README.ko.md) | [Español](README.es.md) | [Bahasa Indonesia](README.id.md) | [Italiano](README.it.md) | [Português](README.pt-BR.md) | [Türkçe](README.tr.md) | [Tiếng Việt](README.vi.md) | [ไทย](README.th.md)
 
-**Pre-session context governance for Claude Code. See what's loaded before you start, find duplicates across scopes, and clean up the config mess — before it eats your context window.**
+**A visual config manager for Claude Code. See everything Claude has stored — memories, skills, MCP servers, rules, commands, agents — organized by scope. Drag items between scopes, find duplicates, clean up the mess.**
 
-> **100+ stars in 5 days!** This project had [11 stars when I first posted it on Reddit 3 days ago](https://www.reddit.com/r/coolgithubprojects/comments/1s12n97/claude_code_organizer_dashboard_that_shows/). Real users tested it, gave feedback, and helped shape what it is today. First open source project — thank you to everyone who starred, tested, and reported issues. This is just the beginning.
+> First open source project — built solo with Claude Code. If it helped you, a star would make my week.
 
 ![Claude Code Organizer Demo](docs/demo.gif)
 
@@ -42,13 +42,25 @@ Teams installed twice, Gmail three times, Playwright three times. You configured
 
 **You can manage this with CLI commands or by asking Claude** — `ls` one directory, `cat` each file, ask Claude to move this here, delete that, show me what's in this scope. But you're spending turns and tokens just to understand the layout, one item at a time, before you can even decide what to do with it. There's no single view that shows you the full picture: all items, all scopes, all inheritance, at once.
 
+### Problem 2: You have no idea how much context is already used
+
+All of this wrong-scope and duplicate config has a cost. This is a real project directory after two weeks of use:
+
+![Context Budget](docs/cptoken.png)
+
+**21.9K tokens immediately loaded into context, with another 115.4K deferred for MCP tools.** On a 200K window, that's 11% gone before you type — and grows as Claude invokes tools during the session. The fuller the context, the less accurate Claude becomes (**context rot**).
+
+And these numbers only cover what we can measure offline. During a session, Claude silently adds more: rule files re-injected after every tool call, file change diffs, and your full conversation history resent on every API call.
+
 ### The fix: a visual config manager
 
 ```bash
 npx @mcpware/claude-code-organizer
 ```
 
-Think of it like a file manager for your Claude Code configuration. You can do everything in terminal too, but sometimes you need to see the whole tree to understand what's going on.
+Think of it like a file manager for `~/.claude/`. You can do everything in terminal too — but sometimes you need to see the whole tree to understand what's going on.
+
+The workflow: see what's loaded and where it comes from → spot duplicates and wrong-scope items → drag-and-drop to the right scope or delete → check Context Budget → refresh → repeat until your initial load is lean.
 
 > **First run auto-installs a `/cco` skill** — after that, just type `/cco` in any Claude Code session to open the dashboard.
 
@@ -62,38 +74,13 @@ You open a deeply nested project and Claude is behaving weirdly — following in
 
 ### Example: Find and clean up duplicates
 
-Claude created the same memory in 3 scopes. An MCP server got installed in both Global and your project. A skill exists at both workspace and project level. Switch to **By Category** view — all items of the same type across all scopes are grouped together. Duplicates jump out immediately. Preview each one, decide which to keep, delete the rest.
-
-### Example: Understand your token budget
-
-Click **Context Budget** to see exactly what gets loaded before you start a conversation — broken down into **Always Loaded** (CLAUDE.md, memories, skills, rules) vs **Deferred** (MCP tool schemas loaded on-demand). Sort by token count to find the biggest consumers. Toggle between 200K and 1M context window to see the impact on your specific plan.
-
-### Problem 2: You have no idea how much context is already used
-
-This is a real project directory after two weeks of use:
-
-![Context Budget](docs/cptoken.png)
-
-**If you start a Claude Code session under this directory, 21.9K tokens are immediately loaded into context, with another 115.4K deferred for on-demand MCP tools.** On a 200K context window, that's 11% gone before you type a single character — and grows as Claude invokes MCP tools during the session.
-
-The Context Budget panel breaks this down:
-
-- **Always Loaded** — CLAUDE.md, MEMORY.md index (first 200 lines), skill descriptions, rules, system prompt and tools. These are in your context every single request.
-- **Deferred** — MCP tool schemas that Claude loads on-demand via ToolSearch. Not in context until Claude needs a specific tool — but they add up fast if you have many MCP servers.
-
-The fuller the context, the less accurate Claude becomes — an effect known as **context rot**. And these numbers only cover what we can measure offline. During a session, Claude Code silently adds more:
-
-- **Rule re-injection** — all rule files re-injected after every tool call. After ~30 calls, this alone can consume ~46% of context
-- **File change diffs** — linter changes a file you read? Full diff injected as hidden system-reminder
-- **Conversation history** — your messages + Claude's responses + all tool results resent on every API call
-
-The Context Budget panel shows you exactly what's loaded and where it comes from — current scope or inherited from parent scopes — with per-item token counts. Right next to it is the scope management tree where you can drag-and-drop items between scopes. The workflow: check your token budget, spot duplicates or wrong-scope items, clean them up, refresh — repeat until your initial load is lean. Move things to the right scope so you don't end up creating the same skill twice across different projects.
+Claude created the same memory in 3 scopes. An MCP server got installed in both Global and your project. Switch to **By Category** view — all items of the same type across all scopes grouped together. Duplicates jump out immediately. Preview each one, decide which to keep, delete the rest.
 
 ---
 
 ## Comparison
 
-We analyzed the source code of every Claude Code tool we could find — analytics dashboards (9K+ stars), desktop apps (600+ stars), VS Code extensions, TUI session managers, terminal statuslines. None offered true scope hierarchy + drag-and-drop cross-scope moves in a standalone dashboard.
+How does this compare to other Claude Code tools?
 
 | Feature | **Claude Code Organizer** | Desktop app (600+⭐) | VS Code extension | Analytics dashboards | TUI tools |
 |---------|:---:|:---:|:---:|:---:|:---:|
@@ -119,7 +106,7 @@ We analyzed the source code of every Claude Code tool we could find — analytic
 - **Bulk operations** — Select mode: tick multiple items, move or delete all at once
 - **Same-type safety** — Each category moves to its own directory — memories to memory/, skills to skills/, commands to commands/, etc.
 - **Search & filter** — Real-time search across all items, filter by category with smart pill hiding (zero-count pills collapse into "+N more")
-- **Context Budget** — See exactly how many tokens your config consumes before you type anything — per-item breakdown, inherited scope costs, system overhead estimate, and % of 200K context used
+- **Context Budget** — See what's always loaded vs deferred, per-item token counts, inherited scope breakdown, and 200K/1M context window toggle
 - **Detail panel** — Click any item to see full metadata, content preview, file path, and open in VS Code
 - **Session inspector** — Parsed conversation previews with speaker labels, session titles, and metadata
 - **11 categories** — Memories, skills, MCP servers, commands, agents, rules, configs, hooks, plugins, plans, and sessions
@@ -130,7 +117,7 @@ We analyzed the source code of every Claude Code tool we could find — analytic
 - **Real file moves** — Actually moves files in `~/.claude/`, not just a viewer
 - **Path traversal protection** — All file endpoints validate paths are within HOME directory
 - **Cross-device support** — Automatic copy+delete fallback when rename fails across filesystems (Docker/WSL)
-- **100+ E2E tests** — Playwright test suite covering filesystem verification, security (path traversal, malformed input), context budget, and all 11 categories
+- **124 E2E tests** — Playwright test suite covering scanner accuracy, context budget calculations, filesystem verification, security, and all 11 categories
 
 
 ## Quick Start
@@ -234,12 +221,14 @@ The dashboard is backed by a REST API:
 | `/api/destinations` | GET | Get valid move destinations for an item |
 | `/api/file-content` | GET | Read file content for detail panel preview |
 | `/api/session-preview` | GET | Parse JSONL session into readable conversation with speaker labels |
+| `/api/context-budget` | GET | Token budget breakdown — always loaded vs deferred, per scope |
+| `/api/export` | POST | Export all configs to a folder, organized by scope |
 
 ## Roadmap
 
 | Feature | Status | Description |
 |---------|:------:|-------------|
-| **Config Export/Backup** | 🔜 Next | One-click export all scanned files to a backup folder — your own snapshot |
+| **Config Export/Backup** | ✅ Done | One-click export all configs to `~/.claude/exports/`, organized by scope |
 | **Skill Quality Scoring** | 📋 Planned | Rate and surface the best skills from 5,000+ in the ecosystem — no more guessing |
 | **Security Audit** | 📋 Planned | Scan your `.claude/` for risky permissions, leaked secrets, or suspicious hooks |
 | **Cross-Harness Portability** | 📋 Planned | Convert skills/configs between Claude Code ↔ Cursor ↔ Codex ↔ Gemini CLI |
