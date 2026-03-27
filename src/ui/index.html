@@ -21,6 +21,7 @@
         <button class="theme-btn" id="themeToggle" type="button">◐</button>
       </div>
 
+      <button class="sidebar-security-btn" id="securityScanBtn" type="button">🛡️ Security Scan</button>
       <input class="sidebar-search" id="searchInput" type="text" placeholder="Search...">
 
       <div class="sidebar-tree" id="sidebarTree"></div>
@@ -62,41 +63,40 @@
       </div>
 
       <div class="detail-body">
-        <div class="d-field">
-          <div class="d-label">Scope</div>
-          <div class="d-value" id="detailScope">—</div>
-        </div>
-
-        <div class="d-field">
-          <div class="d-label">Type</div>
-          <div class="d-value" id="detailType">—</div>
-        </div>
-
-        <div class="d-field">
-          <div class="d-label">Description</div>
-          <div class="d-value" id="detailDesc">Select an item to inspect its metadata and preview.</div>
-        </div>
-
-        <div class="d-field">
-          <div class="d-label">Size</div>
-          <div class="d-value" id="detailSize">—</div>
-        </div>
-
-        <div class="d-field">
-          <div class="d-label">Dates</div>
-          <div class="d-dates" id="detailDates">
-            <div class="d-value d-date-line">Created: <b>—</b></div>
-            <div class="d-value d-date-line">Modified: <b>—</b></div>
+        <div class="d-info-grid">
+          <div class="d-info-cell">
+            <span class="d-info-label">Scope</span>
+            <span class="d-info-val" id="detailScope">—</span>
+          </div>
+          <div class="d-info-cell">
+            <span class="d-info-label">Type</span>
+            <span class="d-info-val" id="detailType">—</span>
+          </div>
+          <div class="d-info-cell">
+            <span class="d-info-label">Size</span>
+            <span class="d-info-val" id="detailSize">—</span>
           </div>
         </div>
 
-        <div class="d-field">
-          <div class="d-label">Path</div>
-          <div class="d-path" id="detailPath">—</div>
+        <div class="d-desc-wrap">
+          <span class="d-info-label">Description</span>
+          <div class="d-desc" id="detailDesc">Select an item to inspect its metadata and preview.</div>
         </div>
 
+        <div class="d-info-grid" id="detailDates">
+          <div class="d-info-cell">
+            <span class="d-info-label">Created</span>
+            <span class="d-info-val">—</span>
+          </div>
+          <div class="d-info-cell">
+            <span class="d-info-label">Modified</span>
+            <span class="d-info-val">—</span>
+          </div>
+        </div>
+
+        <div class="d-path" id="detailPath">—</div>
+
         <div class="d-field d-field-preview">
-          <div class="d-label">Preview</div>
           <div class="d-preview" id="previewContent">Select an item to preview</div>
         </div>
       </div>
@@ -142,6 +142,32 @@
         <div class="ctx-budget-note" id="ctxBudgetNote">
           Token counts are estimates. System overhead is estimated from known baselines.
         </div>
+      </div>
+    </div>
+
+    <div class="detail hidden" id="securityPanel">
+      <div class="detail-top">
+        <h2 id="securityTitle">🛡️ Security Scan</h2>
+        <button class="detail-x" id="securityClose" type="button">✕</button>
+      </div>
+
+      <div class="security-body" id="securityBody">
+        <div class="security-intro" id="securityIntro">
+          <p>Scan your MCP servers for prompt injection, tool poisoning, credential exposure, and other security threats.</p>
+          <p class="security-note">This connects to each MCP server to inspect tool definitions — the actual attack surface.</p>
+          <button class="d-btn d-btn-move security-start-btn" id="securityStartBtn" type="button">Start Security Scan</button>
+        </div>
+        <div class="security-progress hidden" id="securityProgress">
+          <div class="security-progress-text" id="securityProgressText">Connecting to MCP servers...</div>
+          <div class="security-progress-bar-wrap">
+            <div class="security-progress-bar" id="securityProgressBar"></div>
+          </div>
+        </div>
+        <div class="security-results hidden" id="securityResults"></div>
+      </div>
+
+      <div class="security-footer hidden" id="securityFooter">
+        <div class="security-footer-note" id="securityFooterNote"></div>
       </div>
     </div>
   </div>

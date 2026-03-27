@@ -116,7 +116,9 @@ function parseJsonLine(line) {
 function formatSize(bytes) {
   if (!bytes) return "0B";
   if (bytes < 1024) return bytes + "B";
-  return (bytes / 1024).toFixed(1) + "K";
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + "K";
+  if (bytes < 1024 * 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(1) + "MB";
+  return (bytes / (1024 * 1024 * 1024)).toFixed(1) + "GB";
 }
 
 function parseFrontmatter(content) {
@@ -362,8 +364,8 @@ async function scanMemories(scope) {
       subType: fm.type || "memory", // feedback, user, project, reference
       size: s ? formatSize(s.size) : "0B",
       sizeBytes: s ? s.size : 0,
-      mtime: s ? s.mtime.toISOString().slice(0, 10) : "",
-      ctime: s ? s.birthtime.toISOString().slice(0, 10) : "",
+      mtime: s ? s.mtime.toISOString().slice(0, 16) : "",
+      ctime: s ? s.birthtime.toISOString().slice(0, 16) : "",
       path: fullPath,
     });
   }
@@ -448,8 +450,8 @@ async function scanSkills(scope) {
         size: formatSize(totalSize),
         sizeBytes: totalSize,
         fileCount,
-        mtime: s ? s.mtime.toISOString().slice(0, 10) : "",
-        ctime: s ? s.birthtime.toISOString().slice(0, 10) : "",
+        mtime: s ? s.mtime.toISOString().slice(0, 16) : "",
+        ctime: s ? s.birthtime.toISOString().slice(0, 16) : "",
         path: skillDir,
         bundle: bundleInfo?.source || null,
       });
@@ -486,6 +488,7 @@ async function scanMcpServers(scope) {
   // Project-scope servers are at projects[repoDir].mcpServers
   const claudeJsonPath = join(HOME, ".claude.json");
   const claudeJsonContent = await safeReadFile(claudeJsonPath);
+  const claudeJsonStat = await safeStat(claudeJsonPath);
   if (claudeJsonContent) {
     try {
       const claudeJson = JSON.parse(claudeJsonContent);
@@ -496,6 +499,7 @@ async function scanMcpServers(scope) {
           const cmd = serverConfig.command || serverConfig.url || "";
           const args = serverConfig.args || [];
           const desc = [cmd, ...args].filter(Boolean).join(" ").slice(0, 100);
+          const cfgBytes = JSON.stringify(serverConfig).length;
           items.push({
             category: "mcp",
             scopeId: scope.id,
@@ -503,10 +507,10 @@ async function scanMcpServers(scope) {
             fileName: ".claude.json",
             description: desc || "(HTTP MCP)",
             subType: "mcp",
-            size: "",
-            sizeBytes: 0,
-            mtime: "",
-            ctime: "",
+            size: formatSize(cfgBytes),
+            sizeBytes: cfgBytes,
+            mtime: claudeJsonStat ? claudeJsonStat.mtime.toISOString().slice(0, 16) : "",
+            ctime: claudeJsonStat ? claudeJsonStat.birthtime.toISOString().slice(0, 16) : "",
             path: claudeJsonPath,
             mcpConfig: serverConfig,
           });
@@ -520,6 +524,7 @@ async function scanMcpServers(scope) {
           const cmd = serverConfig.command || serverConfig.url || "";
           const args = serverConfig.args || [];
           const desc = [cmd, ...args].filter(Boolean).join(" ").slice(0, 100);
+          const cfgBytes = JSON.stringify(serverConfig).length;
           items.push({
             category: "mcp",
             scopeId: scope.id,
@@ -527,10 +532,10 @@ async function scanMcpServers(scope) {
             fileName: ".claude.json",
             description: desc || "(HTTP MCP)",
             subType: "mcp",
-            size: "",
-            sizeBytes: 0,
-            mtime: "",
-            ctime: "",
+            size: formatSize(cfgBytes),
+            sizeBytes: cfgBytes,
+            mtime: claudeJsonStat ? claudeJsonStat.mtime.toISOString().slice(0, 16) : "",
+            ctime: claudeJsonStat ? claudeJsonStat.birthtime.toISOString().slice(0, 16) : "",
             path: claudeJsonPath,
             mcpConfig: serverConfig,
           });
@@ -542,6 +547,7 @@ async function scanMcpServers(scope) {
   for (const { path: mcpPath, label } of mcpPaths) {
     const content = await safeReadFile(mcpPath);
     if (!content) continue;
+    const mcpStat = await safeStat(mcpPath);
     try {
       const config = JSON.parse(content);
       const servers = config.mcpServers || {};
@@ -549,6 +555,7 @@ async function scanMcpServers(scope) {
         const cmd = serverConfig.command || "";
         const args = serverConfig.args || [];
         const desc = [cmd, ...args].filter(Boolean).join(" ").slice(0, 100);
+        const cfgBytes = JSON.stringify(serverConfig).length;
 
         items.push({
           category: "mcp",
@@ -557,10 +564,10 @@ async function scanMcpServers(scope) {
           fileName: basename(mcpPath),
           description: desc,
           subType: "mcp",
-          size: "",
-          sizeBytes: 0,
-          mtime: "",
-          ctime: "",
+          size: formatSize(cfgBytes),
+          sizeBytes: cfgBytes,
+          mtime: mcpStat ? mcpStat.mtime.toISOString().slice(0, 16) : "",
+          ctime: mcpStat ? mcpStat.birthtime.toISOString().slice(0, 16) : "",
           path: mcpPath,
           mcpConfig: serverConfig,
         });
@@ -578,6 +585,7 @@ async function scanMcpServers(scope) {
   for (const sPath of settingsFiles) {
     const content = await safeReadFile(sPath);
     if (!content) continue;
+    const sStat = await safeStat(sPath);
     try {
       const settings = JSON.parse(content);
       const servers = settings.mcpServers || {};
@@ -585,6 +593,7 @@ async function scanMcpServers(scope) {
         const cmd = serverConfig.command || "";
         const args = serverConfig.args || [];
         const desc = [cmd, ...args].filter(Boolean).join(" ").slice(0, 100);
+        const cfgBytes = JSON.stringify(serverConfig).length;
         items.push({
           category: "mcp",
           scopeId: scope.id,
@@ -592,10 +601,10 @@ async function scanMcpServers(scope) {
           fileName: basename(sPath),
           description: desc,
           subType: "mcp",
-          size: "",
-          sizeBytes: 0,
-          mtime: "",
-          ctime: "",
+          size: formatSize(cfgBytes),
+          sizeBytes: cfgBytes,
+          mtime: sStat ? sStat.mtime.toISOString().slice(0, 16) : "",
+          ctime: sStat ? sStat.birthtime.toISOString().slice(0, 16) : "",
           path: sPath,
           mcpConfig: serverConfig,
         });
@@ -637,8 +646,8 @@ async function scanConfigs(scope) {
       subType: "config",
       size: s ? formatSize(s.size) : "0B",
       sizeBytes: s ? s.size : 0,
-      mtime: s ? s.mtime.toISOString().slice(0, 10) : "",
-      ctime: s ? s.birthtime.toISOString().slice(0, 10) : "",
+      mtime: s ? s.mtime.toISOString().slice(0, 16) : "",
+      ctime: s ? s.birthtime.toISOString().slice(0, 16) : "",
       path: cfg.path,
       locked: true,
     });
@@ -770,8 +779,8 @@ async function scanPlans(scope) {
       subType: "plan",
       size: s ? formatSize(s.size) : "0B",
       sizeBytes: s ? s.size : 0,
-      mtime: s ? s.mtime.toISOString().slice(0, 10) : "",
-      ctime: s ? s.birthtime.toISOString().slice(0, 10) : "",
+      mtime: s ? s.mtime.toISOString().slice(0, 16) : "",
+      ctime: s ? s.birthtime.toISOString().slice(0, 16) : "",
       path: fullPath,
       // plans are standalone .md files, movable like memories
     });
@@ -819,8 +828,8 @@ async function scanRules(scope) {
       subType: "rule",
       size: s ? formatSize(s.size) : "0B",
       sizeBytes: s ? s.size : 0,
-      mtime: s ? s.mtime.toISOString().slice(0, 10) : "",
-      ctime: s ? s.birthtime.toISOString().slice(0, 10) : "",
+      mtime: s ? s.mtime.toISOString().slice(0, 16) : "",
+      ctime: s ? s.birthtime.toISOString().slice(0, 16) : "",
       path: fullPath,
     });
   }
@@ -858,8 +867,8 @@ async function scanCommands(scope) {
         subType: "command",
         size: s ? formatSize(s.size) : "0B",
         sizeBytes: s ? s.size : 0,
-        mtime: s ? s.mtime.toISOString().slice(0, 10) : "",
-        ctime: s ? s.birthtime.toISOString().slice(0, 10) : "",
+        mtime: s ? s.mtime.toISOString().slice(0, 16) : "",
+        ctime: s ? s.birthtime.toISOString().slice(0, 16) : "",
         path: fullPath,
       });
     }
@@ -898,8 +907,8 @@ async function scanAgents(scope) {
         subType: "agent",
         size: s ? formatSize(s.size) : "0B",
         sizeBytes: s ? s.size : 0,
-        mtime: s ? s.mtime.toISOString().slice(0, 10) : "",
-        ctime: s ? s.birthtime.toISOString().slice(0, 10) : "",
+        mtime: s ? s.mtime.toISOString().slice(0, 16) : "",
+        ctime: s ? s.birthtime.toISOString().slice(0, 16) : "",
         path: fullPath,
       });
     }
@@ -964,8 +973,8 @@ async function scanSessions(scope) {
       subType: "session",
       size: s ? formatSize(s.size) : "0B",
       sizeBytes: s ? s.size : 0,
-      mtime: s ? s.mtime.toISOString().slice(0, 10) : "",
-      ctime: s ? s.birthtime.toISOString().slice(0, 10) : "",
+      mtime: s ? s.mtime.toISOString().slice(0, 16) : "",
+      ctime: s ? s.birthtime.toISOString().slice(0, 16) : "",
       path: fullPath,
       deletable: true, // sessions can be deleted but not moved
     });

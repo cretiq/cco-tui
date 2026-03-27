@@ -5,7 +5,7 @@
  */
 
 import { createServer } from "node:http";
-import { readFile } from "node:fs/promises";
+import { readFile, stat, open } from "node:fs/promises";
 import { join, extname, resolve, dirname } from "node:path";
 import { homedir } from "node:os";
 import { createRequire } from "node:module";
@@ -13,6 +13,8 @@ import https from "node:https";
 import { scan } from "./scanner.mjs";
 import { moveItem, deleteItem, getValidDestinations } from "./mover.mjs";
 import { countTokens, getMethod } from "./tokenizer.mjs";
+import { introspectServers } from "./mcp-introspector.mjs";
+import { runSecurityScan, checkClaudeAvailable, llmJudge } from "./security-scanner.mjs";
 
 // ── Update check ─────────────────────────────────────────────────────
 async function checkForUpdate() {
@@ -580,49 +582,76 @@ async function handleRequest(req, res) {
     }
   }
 
-  // GET /api/session-preview?path=... — parse JSONL session into readable conversation
+  // GET /api/session-preview?path=... — parse JSONL session into structured conversation
   if (path === "/api/session-preview" && req.method === "GET") {
     const filePath = url.searchParams.get("path");
     if (!filePath || !filePath.endsWith(".jsonl") || !isPathAllowed(filePath)) {
       return json(res, { ok: false, error: "Invalid or disallowed session path" }, 400);
     }
     try {
-      const raw = await readFile(filePath, "utf-8");
-      const lines = raw.trim().split("\n");
-      const messages = [];
-      let title = null;
-      let totalMessages = 0;
+      const fileStat = await stat(filePath);
+      const fileSize = fileStat.size;
 
-      for (const line of lines) {
+      // Read first 4KB for title (aiTitle is near the top)
+      const headSize = Math.min(4096, fileSize);
+      const fh = await open(filePath, "r");
+      const headBuf = Buffer.alloc(headSize);
+      await fh.read(headBuf, 0, headSize, 0);
+      let title = null;
+      for (const line of headBuf.toString("utf-8").split("\n").slice(0, 10)) {
+        try { const e = JSON.parse(line); if (e.aiTitle) { title = e.aiTitle; break; } } catch {}
+      }
+
+      // Read last 256KB for recent messages (enough for ~20 text messages)
+      const tailSize = Math.min(256 * 1024, fileSize);
+      const tailBuf = Buffer.alloc(tailSize);
+      await fh.read(tailBuf, 0, tailSize, fileSize - tailSize);
+      await fh.close();
+
+      const tailRaw = tailBuf.toString("utf-8");
+      // Skip first partial line if we didn't read from start
+      const tailLines = tailSize < fileSize ? tailRaw.split("\n").slice(1) : tailRaw.split("\n");
+
+      const messages = [];
+      let totalMessages = 0;
+      for (const line of tailLines) {
+        if (!line.trim()) continue;
         try {
           const entry = JSON.parse(line);
-          if (entry.aiTitle) title = entry.aiTitle;
           if (entry.message?.role && entry.message?.content) {
-            const role = entry.message.role === "user" ? "👤 User" : "🤖 Assistant";
+            const role = entry.message.role;
             const content = entry.message.content;
-            // Content can be string or array of {type, text}
-            const text = typeof content === "string"
-              ? content
-              : Array.isArray(content)
-                ? content.filter(c => c.type === "text").map(c => c.text).join("\n")
-                : "";
+            const textParts = [];
+            const toolUses = [];
+            if (typeof content === "string") {
+              textParts.push(content);
+            } else if (Array.isArray(content)) {
+              for (const c of content) {
+                if (c.type === "text" && c.text?.trim()) textParts.push(c.text);
+                else if (c.type === "tool_use") toolUses.push({ name: c.name, id: c.id });
+              }
+            }
+            const text = textParts.join("\n");
+            totalMessages++;
             if (text.trim()) {
-              totalMessages++;
-              const display = text.length > 500 ? text.slice(0, 500) + "\n... (truncated)" : text;
-              messages.push(`${role}:\n${display}`);
+              messages.push({
+                role,
+                text: text.length > 800 ? text.slice(0, 800) + "\n… (truncated)" : text,
+                toolUses: toolUses.length ? toolUses : undefined,
+              });
             }
           }
         } catch { /* skip malformed lines */ }
       }
 
-      // Show last 20 messages (most recent conversation)
       const last20 = messages.slice(-20);
-      const header = title ? `# ${title}\n\n` : "";
-      const showing = totalMessages > 20
-        ? `Showing last 20 of ${totalMessages} messages\n\n`
-        : `${totalMessages} messages\n\n`;
-      const preview = header + showing + last20.join("\n\n---\n\n");
-      return json(res, { ok: true, content: preview || "(empty session)" });
+      return json(res, {
+        ok: true,
+        title,
+        totalMessages,
+        showing: last20.length,
+        messages: last20,
+      });
     } catch {
       return json(res, { ok: false, error: "Cannot read session" }, 400);
     }
@@ -721,6 +750,60 @@ async function handleRequest(req, res) {
     }
   }
 
+  // ── Security Scan API ──────────────────────────────────────────────
+
+  // GET /api/security-status — check if Claude Code CLI is available for LLM judge
+  if (path === "/api/security-status" && req.method === "GET") {
+    const status = await checkClaudeAvailable();
+    return json(res, { ok: true, ...status });
+  }
+
+  // POST /api/security-scan — run full security scan (introspect + pattern + baseline)
+  if (path === "/api/security-scan" && req.method === "POST") {
+    try {
+      if (!cachedData) await freshScan();
+
+      // Get all MCP server items from scan data
+      const mcpItems = cachedData.items.filter(i => i.category === "mcp" && i.mcpConfig);
+
+      // Phase 1: Introspect MCP servers to get tool definitions
+      const introspectionResults = await introspectServers(mcpItems);
+
+      // Phase 2 + 3: Pattern scan + baseline comparison
+      const scanResults = await runSecurityScan(introspectionResults, cachedData);
+
+      return json(res, scanResults);
+    } catch (err) {
+      return json(res, { ok: false, error: `Security scan failed: ${err.message}` }, 500);
+    }
+  }
+
+  // POST /api/security-rescan — run LLM judge on specific tools (user-triggered)
+  if (path === "/api/security-rescan" && req.method === "POST") {
+    try {
+      const { toolsToJudge } = await readBody(req);
+      if (!toolsToJudge || !Array.isArray(toolsToJudge) || toolsToJudge.length === 0) {
+        return json(res, { ok: false, error: "No tools specified for rescan" }, 400);
+      }
+
+      // Check Claude availability first
+      const status = await checkClaudeAvailable();
+      if (!status.available) {
+        return json(res, {
+          ok: false,
+          error: "Claude Code session not found. Please open Claude Code in a terminal first, then retry.",
+          needsAuth: true,
+        }, 503);
+      }
+
+      // Run LLM judge
+      const llmResults = await llmJudge(toolsToJudge);
+      return json(res, { ok: true, results: llmResults });
+    } catch (err) {
+      return json(res, { ok: false, error: `LLM rescan failed: ${err.message}` }, 500);
+    }
+  }
+
   // ── Static UI files ──
 
   if (path === "/" || path === "/index.html") {
@@ -750,17 +833,25 @@ export function startServer(port = 3847, maxRetries = 10) {
   // ── Auto-shutdown when all browser tabs close (#2) ──
   // Uses SSE heartbeat: browser opens /heartbeat connection, server tracks
   // active clients. When all disconnect, starts idle countdown.
-  const IDLE_TIMEOUT_MS = 5 * 60 * 1000; // 5 min safety net
+  const IDLE_TIMEOUT_MS = 5 * 60 * 1000; // 5 min — only used if NO browser ever connects
+  const DISCONNECT_GRACE_MS = 30 * 1000; // 30s grace for SSE reconnects
   const clients = new Set();
   let idleTimer = null;
+  let hadClientEver = false;
 
   function startIdleTimer() {
     if (idleTimer) clearTimeout(idleTimer);
+    // If a browser connected before, use short grace period (SSE reconnect window).
+    // If no browser ever connected, use the full safety-net timeout.
+    const ms = hadClientEver ? DISCONNECT_GRACE_MS : IDLE_TIMEOUT_MS;
     idleTimer = setTimeout(() => {
-      console.log("\nAll browser tabs closed. Shutting down after 5 minutes of inactivity.");
+      if (clients.size > 0) return; // a client reconnected, don't shut down
+      console.log(hadClientEver
+        ? "\nAll browser tabs closed. Shutting down."
+        : "\nNo browser connected within 5 minutes. Shutting down.");
       console.log("Run again anytime with /cco or npx @mcpware/claude-code-organizer\n");
       process.exit(0);
-    }, IDLE_TIMEOUT_MS);
+    }, ms);
   }
 
   function cancelIdleTimer() {
@@ -780,6 +871,7 @@ export function startServer(port = 3847, maxRetries = 10) {
       res.write(": connected\n\n");
 
       clients.add(res);
+      hadClientEver = true;
       cancelIdleTimer();
 
       const keepalive = setInterval(() => res.write(": ping\n\n"), 30000);

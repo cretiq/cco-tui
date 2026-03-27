@@ -98,6 +98,9 @@ function openInEditor(filePath) {
 const SHORT_DATE = new Intl.DateTimeFormat("en-US", {
   month: "short",
   day: "numeric",
+  hour: "2-digit",
+  minute: "2-digit",
+  hour12: false,
 });
 
 async function init() {
@@ -155,6 +158,7 @@ function setupUi() {
   setupExport();
   setupContextBudget();
   setupResizers();
+  setupSecurityScan();
 }
 
 function setupSearch() {
@@ -665,10 +669,10 @@ function renderMainContent() {
           <span class="cat-hdr-ico">${config.icon}</span>
           <span class="cat-hdr-nm">${esc(config.label)}</span>
           <span class="cat-hdr-cnt">${pluralize(catItems.length, "item")}</span>
-          <span class="cat-hdr-sort">
+          ${category === "mcp" ? "" : `<span class="cat-hdr-sort">
             <button type="button" class="sort-btn${(uiState.sortBy[`${scope.id}::${category}`]?.field === "size") ? " active" : ""}" data-cat="${esc(category)}" data-sort="size">Size ${sortArrow(`${scope.id}::${category}`, "size")}</button>
             <button type="button" class="sort-btn${(uiState.sortBy[`${scope.id}::${category}`]?.field === "date") ? " active" : ""}" data-cat="${esc(category)}" data-sort="date">Date ${sortArrow(`${scope.id}::${category}`, "date")}</button>
-          </span>
+          </span>`}
         </div>
         <div class="cat-body${collapsed ? " collapsed" : ""}">
           ${category === "skill"
@@ -749,18 +753,26 @@ function renderItem(item) {
 
   const dragHandle = item.locked ? "" : `<span class="drag-handle" title="Drag to move">⠿</span>`;
 
+  // Security badge for MCP items
+  const secSev = item.category === "mcp" ? getSecuritySeverity(item.name) : null;
+  const secLabel = secSev === "critical" ? "CRITICAL" : secSev === "high" ? "HIGH" : secSev === "medium" ? "MED" : secSev === "low" ? "LOW" : "";
+  const secBadgeHtml = secSev
+    ? `<span class="sec-badge sec-${secSev} item-sec-flag">${secLabel}</span>`
+    : "";
+
   return `
     <div class="item${item.locked ? " locked" : ""}${isSelected ? " selected" : ""}" data-item-key="${esc(key)}" data-path="${esc(item.path)}" data-category="${esc(item.category)}">
       ${dragHandle}
       ${checkbox}
       <span class="item-ico">${icon}</span>
       <span class="item-name">${esc(item.name)}</span>
+      ${secBadgeHtml}
       ${badgeHtml}
-      <span class="item-desc">${esc(desc)}</span>
-      <div class="item-right">
+      <span class="item-desc">${item.category === "mcp" ? "" : esc(desc)}</span>
+      ${item.category === "mcp" ? "" : `<div class="item-right">
         <span class="item-size">${esc(sizeLabel)}</span>
         <span class="item-date">${esc(dateLabel)}</span>
-      </div>
+      </div>`}
       ${actions}
     </div>`;
 }
@@ -787,8 +799,8 @@ function renderDetailPanel(resetPreview = false) {
     desc.textContent = "Select an item to inspect its metadata and preview.";
     size.textContent = "—";
     dates.innerHTML = `
-      <div class="d-value d-date-line">Created: <b>—</b></div>
-      <div class="d-value d-date-line">Modified: <b>—</b></div>`;
+      <div class="d-info-cell"><span class="d-info-label">Created</span><span class="d-info-val">—</span></div>
+      <div class="d-info-cell"><span class="d-info-label">Modified</span><span class="d-info-val">—</span></div>`;
     path.textContent = "—";
     preview.textContent = "Select an item to preview";
     openBtn.disabled = true;
@@ -806,8 +818,8 @@ function renderDetailPanel(resetPreview = false) {
   desc.textContent = selectedItem.description || "—";
   size.textContent = selectedItem.size || "—";
   dates.innerHTML = `
-    <div class="d-value d-date-line">Created: <b>${esc(selectedItem.ctime || "—")}</b></div>
-    <div class="d-value d-date-line">Modified: <b>${esc(selectedItem.mtime || "—")}</b></div>`;
+    <div class="d-info-cell"><span class="d-info-label">Created</span><span class="d-info-val">${esc(formatShortDate(selectedItem.ctime) || "—")}</span></div>
+    <div class="d-info-cell"><span class="d-info-label">Modified</span><span class="d-info-val">${esc(formatShortDate(selectedItem.mtime) || "—")}</span></div>`;
   path.textContent = selectedItem.path || "—";
 
   openBtn.disabled = false;
@@ -839,8 +851,10 @@ function renderCcActions(item) {
     case "session": {
       const sessionId = (item.fileName || "").replace(".jsonl", "");
       if (sessionId) {
-        buttons.push({ ico: "💡", label: "", prompt: null, info: "Sessions can be resumed directly in Claude Code. Copy the command below and paste it in a new terminal to continue where you left off." });
-        buttons.push({ ico: "💬", label: "Resume Session", prompt: `claude --resume ${sessionId}\n\n# Session file: ${item.path}` });
+        const sessionScope = getScopeById(item.scopeId);
+        const cdCmd = sessionScope?.repoDir ? `cd ${sessionScope.repoDir} && ` : "";
+        buttons.push({ ico: "💡", label: "", prompt: null, info: "Sessions can be resumed directly in Claude Code. Copy the command below and paste it in any terminal to continue where you left off." });
+        buttons.push({ ico: "💬", label: "Resume Session", prompt: `${cdCmd}claude --resume ${sessionId}\n\n# Session file: ${item.path}` });
         buttons.push({ ico: "📋", label: "Summarize", prompt: `I have a Claude Code session at:\n${item.path}\n\nPlease read this session file and give me a summary:\n1. What was this session about?\n2. What was accomplished?\n3. Were there any unfinished tasks or pending actions?\n4. What files were modified?` });
       }
       break;
@@ -1335,7 +1349,7 @@ function renderBreadcrumb(scope) {
 function shouldShowItemBadge(item) {
   if (item.category === "memory") return true;
   if (item.subType && item.subType !== item.category) return true;
-  return ["mcp", "config", "hook", "plugin", "plan"].includes(item.category);
+  return ["config", "hook", "plugin", "plan"].includes(item.category);
 }
 
 function renderBadge(item, detail = false) {
@@ -1544,7 +1558,9 @@ async function loadPreview(item) {
     if (item.category === "session") {
       const res = await fetchJson(`/api/session-preview?path=${encodeURIComponent(item.path)}`);
       if (currentKey !== detailPreviewKey) return;
-      preview.textContent = res.ok ? res.content : "Cannot load session preview";
+      if (!res.ok) { preview.textContent = "Cannot load session preview"; return; }
+      preview.textContent = "";
+      preview.innerHTML = renderSessionChat(res);
       requestAnimationFrame(() => {
         preview.scrollTop = preview.scrollHeight;
       });
@@ -2196,6 +2212,11 @@ function sortCategoryItems(category, items) {
 
   let sorted = [...items];
 
+  // Default sort for sessions: newest first
+  if (!sortState && category === "session") {
+    return sorted.sort((a, b) => (b.mtime || "").localeCompare(a.mtime || ""));
+  }
+
   // Default sort for memory: by subType then name
   if (!sortState && category === "memory") {
     const order = { project: 0, reference: 1, user: 2, feedback: 3 };
@@ -2252,9 +2273,54 @@ function resolveItem(itemRef) {
   return getItemByKey(itemKey(itemRef)) || itemRef;
 }
 
+function renderSessionChat(res) {
+  const { title, totalMessages, showing, messages } = res;
+  let html = "";
+
+  // Header
+  if (title) html += `<div class="chat-title">${esc(title)}</div>`;
+  if (totalMessages > showing) {
+    html += `<div class="chat-meta">Showing last ${showing} of ${totalMessages} messages</div>`;
+  } else {
+    html += `<div class="chat-meta">${totalMessages} messages</div>`;
+  }
+
+  // Messages
+  for (const msg of messages) {
+    const isUser = msg.role === "user";
+    const roleClass = isUser ? "chat-user" : "chat-assistant";
+    const roleLabel = isUser ? "You" : "Claude";
+    const avatar = isUser ? "U" : "C";
+
+    let body = esc(msg.text || "");
+    // Basic markdown-ish: **bold**, `code`, ```blocks```
+    body = body.replace(/```([\s\S]*?)```/g, '<pre class="chat-code-block">$1</pre>');
+    body = body.replace(/`([^`]+)`/g, '<code class="chat-inline-code">$1</code>');
+    body = body.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+
+    let toolHtml = "";
+    if (msg.toolUses?.length) {
+      const tools = msg.toolUses.map(t => `<span class="chat-tool-name">${esc(t.name)}</span>`).join("");
+      toolHtml = `<div class="chat-tool-row">${tools}</div>`;
+    }
+
+    html += `
+      <div class="chat-msg ${roleClass}">
+        <div class="chat-role"><span class="chat-avatar chat-avatar-${isUser ? "user" : "ai"}">${avatar}</span> ${roleLabel}</div>
+        <div class="chat-bubble">
+          <div class="chat-text">${body}</div>
+          ${toolHtml}
+        </div>
+      </div>`;
+  }
+
+  return `<div class="chat-container">${html}</div>`;
+}
+
 function formatShortDate(raw) {
   if (!raw) return "—";
-  const date = new Date(`${raw}T00:00:00`);
+  // raw is now "YYYY-MM-DDTHH:MM" (ISO without seconds)
+  const date = new Date(raw.includes("T") ? `${raw}:00` : `${raw}T00:00:00`);
   if (Number.isNaN(date.getTime())) return raw;
   return SHORT_DATE.format(date);
 }
@@ -2278,6 +2344,309 @@ function esc(value) {
 function cssEscape(value) {
   if (window.CSS?.escape) return window.CSS.escape(value);
   return String(value).replace(/["\\]/g, "\\$&");
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// Security Scan UI
+// ══════════════════════════════════════════════════════════════════════
+
+let securityScanResults = null;
+
+/** Map of MCP server name → highest severity found. Used by renderItem() to show badges. */
+let securityBadges = {};
+
+function setupSecurityScan() {
+  const btn = document.getElementById("securityScanBtn");
+  const panel = document.getElementById("securityPanel");
+  const closeBtn = document.getElementById("securityClose");
+  const startBtn = document.getElementById("securityStartBtn");
+
+  if (!btn) return;
+
+  btn.addEventListener("click", () => {
+    document.getElementById("ctxBudgetPanel")?.classList.add("hidden");
+    panel.classList.remove("hidden");
+    if (securityScanResults) renderSecurityResults(securityScanResults);
+  });
+
+  closeBtn?.addEventListener("click", () => {
+    panel.classList.add("hidden");
+  });
+
+  startBtn?.addEventListener("click", async () => {
+    await runSecurityScan();
+  });
+
+  // Delegate clicks on findings → navigate to item
+  document.getElementById("securityResults")?.addEventListener("click", (e) => {
+    const row = e.target.closest("[data-sec-server]");
+    if (!row) return;
+    const serverName = row.dataset.secServer;
+    const scopeId = row.dataset.secScope;
+    if (serverName && scopeId) navigateToMcpServer(serverName, scopeId);
+  });
+}
+
+/** Navigate to a specific MCP server item in the main list. */
+function navigateToMcpServer(serverName, scopeId) {
+  if (!data) return;
+
+  // Find the MCP item
+  const item = data.items.find(i =>
+    i.category === "mcp" && i.name === serverName && i.scopeId === scopeId
+  ) || data.items.find(i =>
+    i.category === "mcp" && i.name === serverName
+  );
+  if (!item) return;
+
+  // Switch to the right scope
+  selectedScopeId = item.scopeId;
+  expandScopePath(selectedScopeId);
+
+  // Filter to MCP category
+  activeFilters = new Set(["mcp"]);
+
+  // Select the item and open detail panel (alongside security panel)
+  selectedItem = item;
+  document.getElementById("detailPanel").classList.remove("hidden");
+  renderAll();
+
+  // Scroll to the item
+  requestAnimationFrame(() => {
+    const row = document.querySelector(`.item[data-item-key="${cssEscape(itemKey(item))}"]`);
+    if (row) {
+      row.scrollIntoView({ behavior: "smooth", block: "center" });
+      row.classList.add("sec-flash");
+      setTimeout(() => row.classList.remove("sec-flash"), 1500);
+    }
+    loadPreview(item);
+  });
+}
+
+/** Get security severity for an MCP server name (for item badges). */
+function getSecuritySeverity(mcpName) {
+  return securityBadges[mcpName] || null;
+}
+
+async function runSecurityScan() {
+  const intro = document.getElementById("securityIntro");
+  const progress = document.getElementById("securityProgress");
+  const progressText = document.getElementById("securityProgressText");
+  const progressBar = document.getElementById("securityProgressBar");
+  const results = document.getElementById("securityResults");
+  const footer = document.getElementById("securityFooter");
+
+  intro.classList.add("hidden");
+  progress.classList.remove("hidden");
+  results.classList.add("hidden");
+  footer.classList.add("hidden");
+  progressBar.style.width = "10%";
+  progressBar.classList.remove("security-bar-error");
+  progressText.textContent = "Connecting to MCP servers...";
+
+  try {
+    progressBar.style.width = "20%";
+    progressText.textContent = "Fetching tool definitions from MCP servers...";
+
+    const resp = await fetch("/api/security-scan", { method: "POST" });
+    const scanData = await resp.json();
+
+    progressBar.style.width = "90%";
+    progressText.textContent = "Analyzing patterns...";
+
+    if (!scanData.ok) {
+      progressText.textContent = `Scan failed: ${scanData.error}`;
+      progressBar.style.width = "100%";
+      progressBar.classList.add("security-bar-error");
+      return;
+    }
+
+    progressBar.style.width = "100%";
+    securityScanResults = scanData;
+
+    // Build badge map for item list
+    securityBadges = {};
+    for (const server of (scanData.servers || [])) {
+      if (server.findings?.length > 0) {
+        const maxSev = server.findings.reduce((max, f) => {
+          const order = { critical: 4, high: 3, medium: 2, low: 1, info: 0 };
+          return (order[f.severity] || 0) > (order[max] || 0) ? f.severity : max;
+        }, "info");
+        securityBadges[server.serverName] = maxSev;
+      }
+    }
+
+    renderSecurityResults(scanData);
+    // Re-render main list to show security badges on MCP items
+    renderAll();
+
+  } catch (err) {
+    progressText.textContent = `Error: ${err.message}`;
+    progressBar.classList.add("security-bar-error");
+  }
+}
+
+function renderSecurityResults(scanData) {
+  const progress = document.getElementById("securityProgress");
+  const results = document.getElementById("securityResults");
+  const footer = document.getElementById("securityFooter");
+  const footerNote = document.getElementById("securityFooterNote");
+
+  progress.classList.add("hidden");
+  results.classList.remove("hidden");
+  footer.classList.remove("hidden");
+
+  const { severityCounts, totalTools, totalServers, serversConnected, baselines, findings } = scanData;
+  const totalFindings = findings.length;
+
+  // ── Summary stats ──
+  let html = `<div class="security-summary">`;
+  html += `<div class="security-stat"><span class="security-stat-num">${serversConnected}<span class="security-stat-sub">/${totalServers}</span></span><span class="security-stat-label">Servers</span></div>`;
+  html += `<div class="security-stat"><span class="security-stat-num">${totalTools}</span><span class="security-stat-label">Tools</span></div>`;
+  html += `<div class="security-stat"><span class="security-stat-num">${totalFindings}</span><span class="security-stat-label">Findings</span></div>`;
+  html += `</div>`;
+
+  // ── Severity pills ──
+  if (totalFindings > 0) {
+    html += `<div class="security-severity-row">`;
+    if (severityCounts.critical > 0) html += `<span class="sec-badge sec-critical">${severityCounts.critical} Critical</span>`;
+    if (severityCounts.high > 0) html += `<span class="sec-badge sec-high">${severityCounts.high} High</span>`;
+    if (severityCounts.medium > 0) html += `<span class="sec-badge sec-medium">${severityCounts.medium} Medium</span>`;
+    if (severityCounts.low > 0) html += `<span class="sec-badge sec-low">${severityCounts.low} Low</span>`;
+    html += `</div>`;
+  } else {
+    html += `<div class="security-clean">All clear — no issues found</div>`;
+  }
+
+  // ── Baseline changes ──
+  const changedServers = (baselines || []).filter(b => b.hasChanges && !b.isFirstScan);
+  if (changedServers.length > 0) {
+    html += `<div class="ctx-section">`;
+    html += `<div class="ctx-section-hdr">`;
+    html += `<span class="ctx-collapse-btn sec-collapse-btn">▾</span>`;
+    html += `<span class="ctx-section-title">Changed since last scan</span>`;
+    html += `<span class="sec-badge sec-critical" style="margin-left:auto">${changedServers.length}</span>`;
+    html += `</div>`;
+    html += `<div class="ctx-section-items">`;
+    for (const b of changedServers) {
+      html += `<div class="ctx-item security-finding" data-sec-server="${esc(b.serverName)}" data-sec-scope="global">`;
+      html += `<span class="ctx-item-icon">🔌</span>`;
+      html += `<span class="ctx-item-name">${esc(b.serverName)} — ${b.changed.length} modified, ${b.added.length} added, ${b.removed.length} removed</span>`;
+      html += `</div>`;
+    }
+    html += `</div></div>`;
+  }
+
+  // ── Findings grouped by server ──
+  if (totalFindings > 0) {
+    // Group findings by server name
+    const byServer = {};
+    for (const f of findings) {
+      const parts = (f.sourceName || "").split("/");
+      const server = parts[0] || "unknown";
+      if (!byServer[server]) byServer[server] = [];
+      byServer[server].push(f);
+    }
+
+    // Sort servers: most severe first
+    const sevOrder = { critical: 4, high: 3, medium: 2, low: 1, info: 0 };
+    const sortedServers = Object.entries(byServer).sort((a, b) => {
+      const maxA = Math.max(...a[1].map(f => sevOrder[f.severity] || 0));
+      const maxB = Math.max(...b[1].map(f => sevOrder[f.severity] || 0));
+      return maxB - maxA;
+    });
+
+    for (const [server, serverFindings] of sortedServers) {
+      const serverData = (scanData.servers || []).find(s => s.serverName === server);
+      const scopeId = serverData?.scopeId || "global";
+      const maxSev = serverFindings.reduce((m, f) => {
+        const o = { critical: 4, high: 3, medium: 2, low: 1 };
+        return (o[f.severity] || 0) > (o[m] || 0) ? f.severity : m;
+      }, "low");
+      const maxBadgeClass = maxSev === "critical" ? "sec-critical" : maxSev === "high" ? "sec-high" : maxSev === "medium" ? "sec-medium" : "sec-low";
+
+      // Deduplicate findings (e.g. 20× "Cross-server reference" → one row with ×20)
+      const deduped = [];
+      const countMap = {};
+      for (const f of serverFindings) {
+        const key = f.id + "::" + f.name;
+        if (!countMap[key]) { countMap[key] = { ...f, count: 1 }; deduped.push(countMap[key]); }
+        else countMap[key].count++;
+      }
+
+      // Server row (item-style, not section header)
+      html += `<div class="sec-server-row" data-sec-server="${esc(server)}" data-sec-scope="${esc(scopeId)}">`;
+      html += `<span class="sec-row-toggle sec-collapse-btn">▸</span>`;
+      html += `<span class="sec-row-icon">🔌</span>`;
+      html += `<span class="sec-row-name">${esc(server)}</span>`;
+      html += `<span class="sec-badge ${maxBadgeClass}">${serverFindings.length}</span>`;
+      html += `</div>`;
+
+      // Findings (hidden by default, toggle with ▸)
+      html += `<div class="sec-findings-list hidden">`;
+      for (const f of deduped) {
+        const bc = f.severity === "critical" ? "sec-critical" : f.severity === "high" ? "sec-high" : f.severity === "medium" ? "sec-medium" : "sec-low";
+        const countLabel = f.count > 1 ? ` ×${f.count}` : "";
+        html += `<div class="sec-finding-row" data-sec-server="${esc(server)}" data-sec-scope="${esc(scopeId)}">`;
+        html += `<span class="sec-badge ${bc}" style="font-size:9px;padding:0 4px">${esc(f.severity.charAt(0).toUpperCase())}</span>`;
+        html += `<span class="sec-finding-label">${esc(f.name)}${countLabel}</span>`;
+        html += `</div>`;
+      }
+      html += `</div>`;
+    }
+  }
+
+  // ── Failed servers (collapsed) ──
+  const failedServers = (scanData.servers || []).filter(s => s.status === "error");
+  if (failedServers.length > 0) {
+    html += `<div class="ctx-section">`;
+    html += `<div class="ctx-section-hdr">`;
+    html += `<span class="ctx-collapse-btn sec-collapse-btn">▸</span>`;
+    html += `<span class="ctx-section-title">${failedServers.length} unreachable</span>`;
+    html += `</div>`;
+    html += `<div class="ctx-section-items hidden">`;
+    for (const s of failedServers) {
+      html += `<div class="ctx-item"><span class="ctx-item-icon">⚠️</span><span class="ctx-item-name">${esc(s.serverName)}</span></div>`;
+    }
+    html += `</div></div>`;
+  }
+
+  results.innerHTML = html;
+
+  // Bind collapse toggles on server rows
+  results.querySelectorAll(".sec-collapse-btn").forEach(btn => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      // For server rows: toggle the next sibling findings list
+      const serverRow = btn.closest(".sec-server-row");
+      if (serverRow) {
+        const list = serverRow.nextElementSibling;
+        if (list?.classList.contains("sec-findings-list")) {
+          const hidden = list.classList.toggle("hidden");
+          btn.textContent = hidden ? "▸" : "▾";
+        }
+        return;
+      }
+      // For ctx-section (baseline changes, unreachable)
+      const section = btn.closest(".ctx-section");
+      const items = section?.querySelector(".ctx-section-items");
+      if (items) {
+        const hidden = items.classList.toggle("hidden");
+        btn.textContent = hidden ? "▸" : "▾";
+      }
+    });
+  });
+
+  // Server row click → navigate to MCP item
+  results.querySelectorAll(".sec-server-row[data-sec-server]").forEach(row => {
+    row.addEventListener("click", (e) => {
+      if (e.target.classList.contains("sec-collapse-btn")) return;
+      navigateToMcpServer(row.dataset.secServer, row.dataset.secScope);
+    });
+  });
+
+  const scanTime = new Date(scanData.timestamp).toLocaleString();
+  footerNote.textContent = `${scanTime}`;
 }
 
 init();

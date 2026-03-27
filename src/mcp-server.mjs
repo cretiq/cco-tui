@@ -11,6 +11,8 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { z } from 'zod';
 import { scan } from './scanner.mjs';
 import { moveItem, deleteItem, getValidDestinations } from './mover.mjs';
+import { introspectServers } from './mcp-introspector.mjs';
+import { runSecurityScan } from './security-scanner.mjs';
 
 const server = new McpServer({
   name: 'claude-code-organizer',
@@ -126,6 +128,23 @@ server.tool(
     const destinations = getValidDestinations(item, cachedData.scopes);
     return {
       content: [{ type: 'text', text: JSON.stringify({ ok: true, destinations, currentScopeId: item.scopeId }, null, 2) }],
+    };
+  }
+);
+
+server.tool(
+  'audit_security',
+  'Scan all MCP servers for security vulnerabilities. Connects to each server, retrieves tool definitions, and runs pattern-based detection for prompt injection, tool poisoning, credential exposure, and other threats. Returns findings with severity levels and baseline comparison.',
+  {},
+  async () => {
+    if (!cachedData) await freshScan();
+
+    const mcpItems = cachedData.items.filter(i => i.category === 'mcp' && i.mcpConfig);
+    const introspectionResults = await introspectServers(mcpItems);
+    const scanResults = await runSecurityScan(introspectionResults, cachedData);
+
+    return {
+      content: [{ type: 'text', text: JSON.stringify(scanResults, null, 2) }],
     };
   }
 );
