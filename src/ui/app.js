@@ -2792,16 +2792,45 @@ function renderSecurityResults(scanData) {
         if (f.description) {
           html += `<div class="sec-finding-desc">${esc(f.description)}</div>`;
         }
-        // Remediation (from external scanners)
+        // Remediation — clickable, copies prompt for Claude Code
         if (f.matchedText && f.externalScanner) {
-          html += `<div class="sec-finding-fix">💡 ${esc(f.matchedText)}</div>`;
+          const engineName = scanData.engineName || f.externalScanner;
+          const serverName = f.serverName || server;
+          const configPath = f.context || "~/.claude/.mcp.json";
+          const prompt = [
+            `I found a security issue in my MCP server "${serverName}" at ${configPath}:`,
+            ``,
+            `Issue: ${f.name} (${categoryLabel})`,
+            `Severity: ${f.severity}`,
+            `${f.description}`,
+            ``,
+            `Detected by: ${engineName} (rule ${f.id})`,
+            `Suggested fix: ${f.matchedText}`,
+            ``,
+            `Please evaluate the root cause of this issue, confirm whether this fix is appropriate for my setup, and guide me through applying it if needed.`,
+          ].join("\n");
+          const promptAttr = esc(prompt).replace(/"/g, "&quot;");
+          html += `<div class="sec-finding-fix sec-fix-clickable" data-fix-prompt="${promptAttr}" title="Click to copy prompt for Claude Code">💡 ${esc(f.matchedText)} <span class="sec-fix-action">Fix with Claude →</span></div>`;
+        } else if (f.matchedText && !f.externalScanner) {
+          // Built-in scanner — also make clickable
+          const prompt = [
+            `I found a security issue in my MCP server "${server}":`,
+            ``,
+            `Issue: ${f.name}`,
+            `Severity: ${f.severity}`,
+            `Matched: ${f.matchedText}`,
+            `Context: ${f.context || ""}`,
+            ``,
+            `Detected by: CCO built-in scanner (rule ${f.id})`,
+            ``,
+            `Please evaluate this finding, explain the risk, and help me fix it if needed.`,
+          ].join("\n");
+          const promptAttr = esc(prompt).replace(/"/g, "&quot;");
+          html += `<div class="sec-finding-fix sec-fix-clickable" data-fix-prompt="${promptAttr}" title="Click to copy prompt for Claude Code">💡 ${esc(f.matchedText.length > 120 ? f.matchedText.slice(0, 120) + "…" : f.matchedText)} <span class="sec-fix-action">Fix with Claude →</span></div>`;
         }
-        // Source context (matched text for built-in, file path for external)
+        // Source context (file path for external)
         if (f.context && !f.externalScanner) {
           html += `<div class="sec-finding-context">${esc(f.context)}</div>`;
-        } else if (f.matchedText && !f.externalScanner) {
-          const truncMatch = f.matchedText.length > 120 ? f.matchedText.slice(0, 120) + "…" : f.matchedText;
-          html += `<div class="sec-finding-context">${esc(truncMatch)}</div>`;
         }
         // External rule link
         if (f.externalRuleUrl) {
@@ -2855,6 +2884,29 @@ function renderSecurityResults(scanData) {
       if (items) {
         const hidden = items.classList.toggle("hidden");
         btn.textContent = hidden ? "▸" : "▾";
+      }
+    });
+  });
+
+  // "Fix with Claude →" click → copy prompt to clipboard
+  results.querySelectorAll(".sec-fix-clickable").forEach(el => {
+    el.addEventListener("click", async (e) => {
+      e.stopPropagation();
+      const prompt = el.dataset.fixPrompt;
+      if (!prompt) return;
+      try {
+        await navigator.clipboard.writeText(prompt);
+        toast("Prompt copied — paste in Claude Code");
+      } catch {
+        // Fallback for non-HTTPS
+        const ta = document.createElement("textarea");
+        ta.value = prompt;
+        ta.style.cssText = "position:fixed;opacity:0";
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand("copy");
+        document.body.removeChild(ta);
+        toast("Prompt copied — paste in Claude Code");
       }
     });
   });
