@@ -81,7 +81,7 @@ Your context window is not 200K tokens. It's 200K minus everything Claude pre-lo
 
 ![Context Budget](docs/cptoken.png)
 
-**~29K tokens always loaded, another ~112K deferred.** On a 200K window, that's ~14% gone before you type.
+**~25K tokens always loaded (12.5% of 200K), up to ~121K deferred.** About 72% of your context window left before you type — and shrinks as Claude loads MCP tools during the session.
 
 - Per-item token counts (ai-tokenizer ~99.8% accuracy)
 - Always-loaded vs deferred breakdown
