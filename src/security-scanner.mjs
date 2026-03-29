@@ -443,7 +443,8 @@ const PATTERNS = [
 
   { id: "TP-011", category: "tool_poisoning", severity: "high", name: "PII extraction from input",
     description: "Tool extracts personal or sensitive information from user input",
-    regex: /\b(extract|parse|scan|search|find|identify)(s|ing|ed)?\s+(all|any)?\s*(api[_\s]?keys?|tokens?|credentials?|emails?|phone|credit\s+card|ssn|social\s+security|pii|personal|private|sensitive)/i },
+    // Tightened: removed "search" (FP on "Search emails"), require "extract/parse/scan/identify" + "all/any" qualifier
+    regex: /\b(extract|parse|scan|identify)(s|ing|ed)?\s+(all|any|every)\s+(api[_\s]?keys?|tokens?|credentials?|emails?|phone\s+numbers?|credit\s+cards?|ssn|social\s+security|pii|personal\s+data|private\s+data|sensitive\s+data)/i },
 
   { id: "TP-012", category: "tool_poisoning", severity: "high", name: "Location or device tracking",
     description: "Tool tracks device location, fingerprints, or usage behavior",
@@ -474,7 +475,9 @@ const PATTERNS = [
 
   { id: "CI-004", category: "coercive_injection", severity: "critical", name: "Priority override",
     description: "Tool claims priority over all other tools",
-    regex: /(Before\s+(executing|invoking|running|using|calling)\s+any\s+other\s+(tool|action|function)s?|(You|User)\s+(must|need to|have to)\s+(use|execute|run|invoke|call)\s+this\s+(tool|function))/i },
+    // Removed "You MUST call this function" — too many FPs on legitimate API workflow ordering
+    // (e.g. "You MUST call resolve-library-id before query-docs"). Kept only "before any OTHER tool".
+    regex: /Before\s+(executing|invoking|running|using|calling)\s+any\s+other\s+(tool|action|function)s?/i },
 
   { id: "CI-005", category: "coercive_injection", severity: "high", name: "Hidden/secret parameter",
     description: "Tool requests hidden or secret parameters",
@@ -672,6 +675,19 @@ const SUSPICIOUS_PARAM_NAMES = new Set([
   "csrf_token", "cookie",
   // File-based credentials (AgentSeal MCPR-105)
   "env_file", "dotenv", "secrets_file", "key_file", "pem_file", "cert_file",
+]);
+
+// Common tool/action words — excluded from cross-server collision/reference detection to reduce FP
+const MIN_CROSS_REF_NAME_LEN = 8;
+const COMMON_TOOL_WORDS = new Set([
+  "search", "find", "get", "list", "read", "write", "create", "update", "delete",
+  "fill", "click", "drag", "hover", "type", "press", "scroll", "select", "submit",
+  "open", "close", "save", "load", "run", "start", "stop", "check", "test",
+  "send", "post", "fetch", "query", "collect", "extract", "parse", "format",
+  "navigate", "browse", "download", "upload", "sync", "push", "pull",
+  "search_papers", "get_user_by_username", "get_user_by_id", "get_articles",
+  "calculate", "convert", "search_users", "search_tweets",
+  "get_comments", "get_tags", "get_topics",
 ]);
 
 // Tools where credential-like param names are legitimate (AgentSeal allowlist)
@@ -1129,16 +1145,17 @@ export async function runSecurityScan(introspectionResults, scanData) {
   // ── Phase 2c: Cross-server analysis (from AgentSeal MCPR-103 + MCPR-108) ──
 
   // Cross-server tool name collision detection
-  const toolNameMap = {}; // tool name → [server names]
+  const toolNameMap = {}; // tool name → [unique server names]
   for (const server of introspectionResults.filter(s => s.ok)) {
     for (const tool of server.tools) {
       const key = tool.name.toLowerCase();
-      if (!toolNameMap[key]) toolNameMap[key] = [];
-      toolNameMap[key].push(server.serverName);
+      if (!toolNameMap[key]) toolNameMap[key] = new Set();
+      toolNameMap[key].add(server.serverName); // Set deduplicates same server in multiple scopes
     }
   }
-  for (const [toolName, servers] of Object.entries(toolNameMap)) {
-    if (servers.length > 1) {
+  for (const [toolName, serverSet] of Object.entries(toolNameMap)) {
+    const servers = [...serverSet];
+    if (servers.length > 1 && !COMMON_TOOL_WORDS.has(toolName)) {
       allFindings.push({
         id: "TS-008", category: "tool_shadowing", severity: "medium",
         name: "Tool name collision across servers",
@@ -1150,16 +1167,6 @@ export async function runSecurityScan(introspectionResults, scanData) {
   }
 
   // Cross-server tool reference detection (MCPR-103)
-  // AgentSeal uses 4 — but common tool names like "search", "fill", "click", "hover"
-  // cause massive false positives. Raised to 8 + common word exclusion.
-  const MIN_CROSS_REF_NAME_LEN = 8;
-  const COMMON_TOOL_WORDS = new Set([
-    "search", "find", "get", "list", "read", "write", "create", "update", "delete",
-    "fill", "click", "drag", "hover", "type", "press", "scroll", "select", "submit",
-    "open", "close", "save", "load", "run", "start", "stop", "check", "test",
-    "send", "post", "fetch", "query", "collect", "extract", "parse", "format",
-    "navigate", "browse", "download", "upload", "sync", "push", "pull",
-  ]);
   for (const server of introspectionResults.filter(s => s.ok)) {
     for (const tool of server.tools) {
       if (!tool.description) continue;
