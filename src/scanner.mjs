@@ -159,45 +159,63 @@ async function getSettingsOverrides() {
  * at each level by consuming segments from the encoded name.
  */
 async function resolveEncodedProjectPath(encoded) {
-  // Remove leading dash, split by dash
   const segments = encoded.replace(/^-/, "").split("-");
-  let currentPath = "/";
-  let i = 0;
+  let rootPath = "/";
+  let startIdx = 0;
 
   // Windows: encoded paths look like "c--Users-user-Desktop-project"
   // The drive letter "c" becomes the first segment, followed by empty string from "--"
   // Need to detect and convert to "C:\"
   if (platform() === "win32" && segments.length >= 2 && segments[0].length === 1 && segments[1] === "") {
-    currentPath = segments[0].toUpperCase() + ":\\";
-    i = 2; // skip drive letter + empty segment
+    rootPath = segments[0].toUpperCase() + ":\\";
+    startIdx = 2;
   }
 
-  while (i < segments.length) {
-    // Try longest match first: join remaining segments and check if directory exists
-    let matched = false;
+  // Normalize for comparison: lowercase, replace _ with -
+  // Claude Code's encoding replaces both / and _ with -, making it lossy.
+  // By normalizing both sides we can match "My_Projects" against "My-Projects".
+  const norm = (s) => s.toLowerCase().replace(/_/g, "-");
+
+  // DFS resolver with backtracking — lists actual directory entries at each
+  // level instead of guessing paths, so underscore/hyphen ambiguity is handled.
+  async function resolve(currentPath, i) {
+    if (i >= segments.length) {
+      return (await exists(currentPath)) ? currentPath : null;
+    }
+
+    let entries;
+    try {
+      entries = await readdir(currentPath, { withFileTypes: true });
+      entries = entries.filter(e => e.isDirectory());
+    } catch {
+      return null;
+    }
+
+    // Map normalized directory names → actual names on disk
+    const entryMap = new Map();
+    for (const e of entries) {
+      const key = norm(e.name);
+      if (!entryMap.has(key)) entryMap.set(key, []);
+      entryMap.get(key).push(e.name);
+    }
+
+    // Try longest match first, backtrack on failure
     for (let end = segments.length; end > i; end--) {
-      const candidate = segments.slice(i, end).join("-");
-      const testPath = join(currentPath, candidate);
-      if (await exists(testPath)) {
-        const s = await safeStat(testPath);
-        if (s && s.isDirectory()) {
-          currentPath = testPath;
-          i = end;
-          matched = true;
-          break;
+      const candidate = norm(segments.slice(i, end).join("-"));
+      const matches = entryMap.get(candidate);
+      if (matches) {
+        for (const actualName of matches) {
+          const nextPath = join(currentPath, actualName);
+          const result = await resolve(nextPath, end);
+          if (result) return result;
         }
       }
     }
-    if (!matched) {
-      // Try single segment
-      currentPath = join(currentPath, segments[i]);
-      i++;
-    }
+
+    return null;
   }
 
-  // Verify the resolved path exists
-  if (await exists(currentPath)) return currentPath;
-  return null;
+  return resolve(rootPath, startIdx);
 }
 
 // ── Scope discovery ──────────────────────────────────────────────────

@@ -2942,3 +2942,144 @@ test.describe('Security Scanner UI', () => {
     env.cleanup();
   });
 });
+
+// ── Path Resolution — underscore/hyphen ambiguity (#17) ────────────
+
+test.describe('Path Resolution', () => {
+
+  test('project with underscores in path is resolved and visible (#17)', async () => {
+    // Claude Code encodes both "/" and "_" as "-", making the encoding lossy.
+    // E.g. /tmp/cco-test-xyz/My_Projects/ai_repo → encoded as -tmp-cco-test-xyz-My-Projects-ai-repo
+    // The resolver must match "My-Projects" back to "My_Projects" on disk.
+    const port = PORT_COUNTER++;
+    const tmpDir = await mkdtemp(join(tmpdir(), 'cco-test-'));
+    const claudeDir = join(tmpDir, '.claude');
+
+    // Create a project dir with underscores
+    const projectDir = join(tmpDir, 'My_Projects', 'ai_repo');
+    await mkdir(projectDir, { recursive: true });
+
+    // Claude Code's encoding: replace both / and _ with -
+    const encodedProject = projectDir.replace(/[/_]/g, '-');
+    const projectMemDir = join(claudeDir, 'projects', encodedProject, 'memory');
+    await mkdir(projectMemDir, { recursive: true });
+    await writeFile(join(projectMemDir, 'MEMORY.md'), '# Memory Index\n');
+    await writeFile(join(projectMemDir, 'test_note.md'),
+      `---\nname: test_note\ndescription: Test note in underscore project\ntype: project\n---\nThis project has underscores in path.`);
+
+    // Need at least one global memory for warmup check
+    await mkdir(join(claudeDir, 'memory'), { recursive: true });
+    await writeFile(join(claudeDir, 'memory', 'MEMORY.md'), '# Memory Index\n');
+    await writeFile(join(claudeDir, 'memory', 'dummy.md'),
+      `---\nname: dummy\ndescription: dummy\ntype: user\n---\ndummy`);
+
+    // Start server using cli.mjs (same as createTestEnv)
+    let actualPort = port;
+    const srv = await new Promise((resolve, reject) => {
+      const proc = spawn(NODE_BIN, [join(PROJECT_ROOT, 'bin', 'cli.mjs'), '--port', String(port)], {
+        env: { ...process.env, HOME: tmpDir },
+        stdio: ['ignore', 'pipe', 'pipe'],
+      });
+      const timeout = setTimeout(() => reject(new Error('Server start timeout')), 10000);
+      proc.stdout.on('data', (data) => {
+        const msg = data.toString();
+        if (msg.includes('running at')) {
+          clearTimeout(timeout);
+          const match = msg.match(/localhost:(\d+)/);
+          if (match) actualPort = parseInt(match[1], 10);
+          resolve(proc);
+        }
+      });
+      proc.on('error', (err) => { clearTimeout(timeout); reject(err); });
+    });
+    const baseURL = `http://localhost:${actualPort}`;
+
+    // Warmup
+    for (let i = 0; i < 10; i++) {
+      try { const r = await (await fetch(`${baseURL}/api/scan`)).json(); if (r.items?.length > 0) break; } catch {}
+      await new Promise(r => setTimeout(r, 300));
+    }
+
+    const scanRes = await fetch(`${baseURL}/api/scan`);
+    const data = await scanRes.json();
+
+    // The underscore project should be resolved — look for its memory item
+    const underscoreItems = data.items.filter(i =>
+      i.scopeId !== 'global' && i.name === 'test_note'
+    );
+    expect(underscoreItems.length).toBe(1);
+
+    // The scope should show the real path with underscores, not hyphens
+    const scope = data.scopes.find(s => s.repoDir && s.repoDir.includes('My_Projects'));
+    expect(scope).toBeTruthy();
+    expect(scope.repoDir).toContain('My_Projects');
+    expect(scope.repoDir).toContain('ai_repo');
+
+    srv.kill('SIGKILL');
+    await new Promise(r => setTimeout(r, 500));
+    await rm(tmpDir, { recursive: true, force: true });
+  });
+
+  test('project with hyphens in path still resolves correctly', async () => {
+    // Ensure the fix for underscores doesn't break normal hyphenated paths
+    const port = PORT_COUNTER++;
+    const tmpDir = await mkdtemp(join(tmpdir(), 'cco-test-'));
+    const claudeDir = join(tmpDir, '.claude');
+
+    const projectDir = join(tmpDir, 'my-company', 'my-repo');
+    await mkdir(projectDir, { recursive: true });
+
+    // Normal encoding: only / replaced with -
+    const encodedProject = projectDir.replace(/\//g, '-');
+    const projectMemDir = join(claudeDir, 'projects', encodedProject, 'memory');
+    await mkdir(projectMemDir, { recursive: true });
+    await writeFile(join(projectMemDir, 'MEMORY.md'), '# Memory Index\n');
+    await writeFile(join(projectMemDir, 'hyphen_note.md'),
+      `---\nname: hyphen_note\ndescription: Test note in hyphenated project\ntype: project\n---\nThis project has hyphens in path.`);
+
+    await mkdir(join(claudeDir, 'memory'), { recursive: true });
+    await writeFile(join(claudeDir, 'memory', 'MEMORY.md'), '# Memory Index\n');
+    await writeFile(join(claudeDir, 'memory', 'dummy.md'),
+      `---\nname: dummy\ndescription: dummy\ntype: user\n---\ndummy`);
+
+    let actualPort = port;
+    const srv = await new Promise((resolve, reject) => {
+      const proc = spawn(NODE_BIN, [join(PROJECT_ROOT, 'bin', 'cli.mjs'), '--port', String(port)], {
+        env: { ...process.env, HOME: tmpDir },
+        stdio: ['ignore', 'pipe', 'pipe'],
+      });
+      const timeout = setTimeout(() => reject(new Error('Server start timeout')), 10000);
+      proc.stdout.on('data', (data) => {
+        const msg = data.toString();
+        if (msg.includes('running at')) {
+          clearTimeout(timeout);
+          const match = msg.match(/localhost:(\d+)/);
+          if (match) actualPort = parseInt(match[1], 10);
+          resolve(proc);
+        }
+      });
+      proc.on('error', (err) => { clearTimeout(timeout); reject(err); });
+    });
+    const baseURL = `http://localhost:${actualPort}`;
+
+    for (let i = 0; i < 10; i++) {
+      try { const r = await (await fetch(`${baseURL}/api/scan`)).json(); if (r.items?.length > 0) break; } catch {}
+      await new Promise(r => setTimeout(r, 300));
+    }
+
+    const scanRes = await fetch(`${baseURL}/api/scan`);
+    const data = await scanRes.json();
+
+    const hyphenItems = data.items.filter(i =>
+      i.scopeId !== 'global' && i.name === 'hyphen_note'
+    );
+    expect(hyphenItems.length).toBe(1);
+
+    const scope = data.scopes.find(s => s.repoDir && s.repoDir.includes('my-company'));
+    expect(scope).toBeTruthy();
+
+    srv.kill('SIGKILL');
+    await new Promise(r => setTimeout(r, 500));
+    await rm(tmpDir, { recursive: true, force: true });
+  });
+});
