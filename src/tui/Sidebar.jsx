@@ -19,17 +19,17 @@ const CATEGORY_COLORS = {
 };
 
 const CATEGORY_ICONS = {
-  memory: '●',
-  skill: '●',
-  mcp: '●',
-  command: '●',
-  hook: '●',
-  plugin: '●',
-  agent: '●',
-  rule: '●',
-  plan: '●',
-  session: '●',
-  config: '●',
+  memory: '',    // nf-cod-lightbulb
+  skill: '',    // nf-cod-wand
+  mcp: '',     // nf-cod-server
+  command: '',   // nf-cod-terminal
+  hook: '',    // nf-cod-symbol_event
+  plugin: '',   // nf-cod-extensions
+  agent: '',    // nf-cod-hubot
+  rule: '',    // nf-cod-shield
+  plan: '',    // nf-cod-list_ordered
+  session: '',   // nf-cod-history
+  config: '',   // nf-cod-gear
 };
 
 export function Sidebar({ state, dispatch }) {
