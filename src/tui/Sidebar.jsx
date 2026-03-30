@@ -7,19 +7,33 @@ import { KEYS } from './keymaps.js';
 import { CATEGORY_COLORS, CATEGORY_ICONS } from './categoryMeta.js';
 
 const SCOPE_GROUPS = [
-  { id: 'phoenix', name: 'Phoenix', match: /^(p[1-5]|m5)$/ },
-  { id: 'claude', name: 'Claude', match: /^(\.claude|\.claude_phoenix|claude-scratch|claude-code-organizer|cco-tui)$/ },
+  { id: 'phoenix', name: 'Phoenix', match: s => /^(p[1-5]|m5)$/.test(s.name) },
+  { id: 'claude', name: 'Claude', match: s =>
+    (s.name === '.claude' && s.parentId === 'global') ||
+    s.name === 'claude-scratch',
+  },
 ];
+
+function disambiguateMembers(members) {
+  const freq = {};
+  for (const s of members) freq[s.name] = (freq[s.name] || 0) + 1;
+  return members.map(s => {
+    if (freq[s.name] <= 1 || !s.repoDir) return s;
+    const parts = s.repoDir.split('/');
+    const parent = parts[parts.length - 2] || '';
+    return { ...s, displayName: `${parent}/${s.name}` };
+  });
+}
 
 function groupChildScopes(children) {
   const groups = [];
   for (const g of SCOPE_GROUPS) {
-    const members = children.filter(s => g.match.test(s.name));
-    if (members.length > 0) groups.push({ ...g, members });
+    const members = children.filter(s => g.match(s));
+    if (members.length > 0) groups.push({ ...g, members: disambiguateMembers(members) });
   }
-  const ungrouped = children.filter(s => !SCOPE_GROUPS.some(g => g.match.test(s.name)));
+  const ungrouped = children.filter(s => !SCOPE_GROUPS.some(g => g.match(s)));
   if (ungrouped.length > 0) {
-    groups.push({ id: '_other', name: 'Projects', members: ungrouped });
+    groups.push({ id: '_other', name: 'Projects', members: disambiguateMembers(ungrouped) });
   }
   return groups;
 }
@@ -198,7 +212,7 @@ export function Sidebar({ state, dispatch }) {
                 bold={isSelectedScope}
                 color={selected ? undefined : (isSelectedScope ? '#e5e5e5' : '#d4d4d4')}
               >
-                {arrow} {item.scope.name}
+                {arrow} {item.scope.displayName || item.scope.name}
               </Text>
               {!isExpanded && <Text color="#d4d4d4"> ({total})</Text>}
             </Box>
