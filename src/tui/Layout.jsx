@@ -8,6 +8,11 @@ import { ItemList } from './ItemList.jsx';
 import { DetailPanel } from './DetailPanel.jsx';
 import { MoveModal } from './MoveModal.jsx';
 import { DeleteModal } from './DeleteModal.jsx';
+import { BudgetView } from './BudgetView.jsx';
+import { SecurityView } from './SecurityView.jsx';
+import { SessionPreview } from './SessionPreview.jsx';
+import { Toast } from './Toast.jsx';
+import { HelpModal } from './HelpModal.jsx';
 
 const SIDEBAR_WIDTH = 24;
 const DETAIL_WIDTH = 34;
@@ -89,7 +94,7 @@ export function Layout({ state, dispatch }) {
         >
           {state.modal?.type === 'help' ? (
             <Box flexGrow={1} alignItems="center" justifyContent="center">
-              <Text dimColor>Help modal (coming soon)</Text>
+              <HelpModal dispatch={dispatch} />
             </Box>
           ) : state.modal?.type === 'move' ? (
             <Box flexGrow={1} alignItems="center" justifyContent="center">
@@ -99,6 +104,22 @@ export function Layout({ state, dispatch }) {
             <Box flexGrow={1} alignItems="center" justifyContent="center">
               <DeleteModal modal={state.modal} state={state} dispatch={dispatch} onDelete={handleDelete} />
             </Box>
+          ) : state.view === 'budget' ? (
+            <>
+              <Box paddingX={1}>
+                <Text bold color="cyan">Context Budget</Text>
+              </Box>
+              <BudgetView state={state} dispatch={dispatch} />
+            </>
+          ) : state.view === 'security' ? (
+            <>
+              <Box paddingX={1}>
+                <Text bold color="cyan">Security Scan</Text>
+              </Box>
+              <SecurityView state={state} dispatch={dispatch} />
+            </>
+          ) : state.view === 'session' ? (
+            <SessionPreview sessionPath={state.selectedItemPath} dispatch={dispatch} />
           ) : (
             <>
               <Box paddingX={1}>
@@ -129,6 +150,7 @@ export function Layout({ state, dispatch }) {
       </Box>
 
       <BottomBar view={state.view} />
+      <Toast toast={state.toast} dispatch={dispatch} />
     </Box>
   );
 }
