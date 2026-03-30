@@ -49,13 +49,13 @@ export function MoveModal({ modal, state, dispatch, onMove }) {
     >
       <Text bold color="cyan">  Move: {itemName}</Text>
       <Box marginTop={1}>
-        <Text dimColor>Select destination scope:</Text>
+        <Text color="#d4d4d4">Select destination scope:</Text>
       </Box>
       <Box marginTop={1} flexDirection="column">
         {loading ? (
-          <Text dimColor>Loading destinations...</Text>
+          <Text color="#d4d4d4">Loading destinations...</Text>
         ) : destinations.length === 0 ? (
-          <Text dimColor>No valid destinations</Text>
+          <Text color="#d4d4d4">No valid destinations</Text>
         ) : (
           destinations.map((dest, i) => (
             <Box key={dest.id}>
@@ -67,7 +67,7 @@ export function MoveModal({ modal, state, dispatch, onMove }) {
         )}
       </Box>
       <Box marginTop={1}>
-        <Text dimColor>↑↓: select  Enter: confirm  Esc: cancel</Text>
+        <Text color="#d4d4d4">↑↓: select  Enter: confirm  Esc: cancel</Text>
       </Box>
     </Box>
   );

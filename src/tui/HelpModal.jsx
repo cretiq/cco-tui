@@ -63,7 +63,7 @@ export function HelpModal({ dispatch }) {
         </Box>
       ))}
       <Box marginTop={1}>
-        <Text dimColor>Press Esc or ? to close</Text>
+        <Text color="#d4d4d4">Press Esc or ? to close</Text>
       </Box>
     </Box>
   );

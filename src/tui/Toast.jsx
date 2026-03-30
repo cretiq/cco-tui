@@ -16,7 +16,7 @@ export function Toast({ toast, dispatch }) {
     <Box justifyContent="flex-end" width="100%">
       <Box borderStyle="round" borderColor="green" paddingX={1}>
         <Text color="green">{toast.message}</Text>
-        {toast.undoId && <Text dimColor>  [u: undo]</Text>}
+        {toast.undoId && <Text color="#d4d4d4">  [u: undo]</Text>}
       </Box>
     </Box>
   );

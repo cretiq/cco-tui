@@ -60,7 +60,7 @@ export function SecurityView({ state, dispatch }) {
   });
 
   if (loading) {
-    return <Box paddingX={1}><Text dimColor>Running security scan...</Text></Box>;
+    return <Box paddingX={1}><Text color="#d4d4d4">Running security scan...</Text></Box>;
   }
 
   const counts = report?.severityCounts || {};
@@ -68,10 +68,10 @@ export function SecurityView({ state, dispatch }) {
   return (
     <Box flexDirection="column" flexGrow={1} paddingX={1}>
       <Box gap={2}>
-        <Text color="#a3a3a3">Scanned {report?.totalTools || 0} tools from {report?.totalServers || 0} servers</Text>
+        <Text color="#d4d4d4">Scanned {report?.totalTools || 0} tools from {report?.totalServers || 0} servers</Text>
       </Box>
       <Box gap={1} marginTop={1}>
-        <Text inverse={!severityFilter} dimColor={!!severityFilter}>[All]</Text>
+        <Text inverse={!severityFilter} color={severityFilter ? '#d4d4d4' : undefined}>[All]</Text>
         {['critical', 'high', 'medium', 'low'].map(s => (
           <Text
             key={s}
@@ -99,10 +99,10 @@ export function SecurityView({ state, dispatch }) {
                   </Text>
                 </Box>
                 <Box marginLeft={4}>
-                  <Text color="#a3a3a3">{f.location}</Text>
+                  <Text color="#d4d4d4">{f.location}</Text>
                 </Box>
                 <Box marginLeft={4}>
-                  <Text color="#737373">{f.snippet?.slice(0, 60)}</Text>
+                  <Text color="#d4d4d4">{f.snippet?.slice(0, 60)}</Text>
                 </Box>
               </Box>
             );

@@ -55,7 +55,7 @@ export function ItemList({ state, dispatch }) {
   if (flatItems.length === 0) {
     return (
       <Box paddingX={1}>
-        <Text dimColor>{state.loading ? 'Scanning...' : 'No items found'}</Text>
+        <Text color="#d4d4d4">{state.loading ? 'Scanning...' : 'No items found'}</Text>
       </Box>
     );
   }
@@ -69,7 +69,7 @@ export function ItemList({ state, dispatch }) {
             <Text bold color="yellow">{cat.toUpperCase()}</Text>
           </Box>
           <Box>
-            <Text dimColor>{'─'.repeat(40)}</Text>
+            <Text color="#d4d4d4">{'─'.repeat(40)}</Text>
           </Box>
           {grouped[cat].map(item => {
             const idx = itemIndex++;
@@ -88,7 +88,7 @@ export function ItemList({ state, dispatch }) {
                     {'▸ '}{item.name}
                   </Text>
                   <Box flexGrow={1} />
-                  <Text color="#a3a3a3">
+                  <Text color="#d4d4d4">
                     {item.size || ''}  {item.mtime ? item.mtime.slice(0, 10) : ''}
                   </Text>
                 </Box>

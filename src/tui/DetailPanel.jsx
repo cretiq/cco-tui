@@ -21,14 +21,14 @@ export function DetailPanel({ state, dispatch }) {
         <Box marginTop={1} flexDirection="column">
           {[...state.bulkSelected].slice(0, 10).map(p => {
             const it = state.items.find(i => i.path === p);
-            return <Text key={p} dimColor>{it?.name || p}</Text>;
+            return <Text key={p} color="#d4d4d4">{it?.name || p}</Text>;
           })}
           {state.bulkSelected.size > 10 && (
-            <Text dimColor>...and {state.bulkSelected.size - 10} more</Text>
+            <Text color="#d4d4d4">...and {state.bulkSelected.size - 10} more</Text>
           )}
         </Box>
         <Box marginTop={1}>
-          <Text dimColor>m: move all  d: delete all  Esc: exit bulk</Text>
+          <Text color="#d4d4d4">m: move all  d: delete all  Esc: exit bulk</Text>
         </Box>
       </Box>
     );
@@ -37,8 +37,8 @@ export function DetailPanel({ state, dispatch }) {
   if (!item) {
     return (
       <Box flexDirection="column" flexGrow={1} paddingX={1} alignItems="center" justifyContent="center">
-        <Text dimColor>Select an item</Text>
-        <Text dimColor>to view details</Text>
+        <Text color="#d4d4d4">Select an item</Text>
+        <Text color="#d4d4d4">to view details</Text>
       </Box>
     );
   }
@@ -46,7 +46,7 @@ export function DetailPanel({ state, dispatch }) {
   return (
     <Box flexDirection="column" flexGrow={1} paddingX={1} overflowY="hidden">
       <Text bold>{item.name}</Text>
-      <Text dimColor color="magenta">{item.category}</Text>
+      <Text color="#c4b5fd">{item.category}</Text>
       <Box marginTop={1} flexDirection="column">
         <Text bold color="cyan">Metadata</Text>
         <Text>  Size:     {item.size || 'unknown'}</Text>

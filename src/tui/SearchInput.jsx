@@ -6,7 +6,7 @@ export function SearchInput({ search, dispatch, isActive }) {
   if (!isActive) {
     return (
       <Box paddingX={1}>
-        <Text dimColor>/: search{search ? ` (${search})` : ''}</Text>
+        <Text color="#d4d4d4">/: search{search ? ` (${search})` : ''}</Text>
       </Box>
     );
   }

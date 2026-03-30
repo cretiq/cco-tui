@@ -43,13 +43,13 @@ export function BudgetView({ state, dispatch }) {
   });
 
   if (loading) {
-    return <Box paddingX={1}><Text dimColor>Calculating token budget...</Text></Box>;
+    return <Box paddingX={1}><Text color="#d4d4d4">Calculating token budget...</Text></Box>;
   }
 
   return (
     <Box flexDirection="column" flexGrow={1} paddingX={1}>
       <Box gap={2}>
-        <Text dimColor>Window: </Text>
+        <Text color="#d4d4d4">Window: </Text>
         <Text inverse={windowSize === 200000} bold={windowSize === 200000}>200K</Text>
         <Text inverse={windowSize === 1000000} bold={windowSize === 1000000}>1M</Text>
       </Box>
@@ -66,14 +66,14 @@ export function BudgetView({ state, dispatch }) {
                 {item.name.padEnd(24).slice(0, 24)}
               </Text>
               <Text color="yellow">{bar}</Text>
-              <Text dimColor> {String(item.tokens).padStart(7)}</Text>
+              <Text color="#d4d4d4"> {String(item.tokens).padStart(7)}</Text>
             </Box>
           );
         })}
       </Box>
       <Box marginTop={1} flexDirection="column">
         <Text>Total: <Text bold color="yellow">{totalTokens.toLocaleString()}</Text> tokens</Text>
-        <Text>Window: <Text dimColor>{usableWindow.toLocaleString()}</Text> usable (~72%)</Text>
+        <Text>Window: <Text color="#d4d4d4">{usableWindow.toLocaleString()}</Text> usable (~72%)</Text>
         <Text>Usage: <Text bold color={totalTokens > usableWindow ? 'red' : 'green'}>
           {((totalTokens / usableWindow) * 100).toFixed(1)}%
         </Text></Text>

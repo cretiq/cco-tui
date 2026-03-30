@@ -12,7 +12,7 @@ export function FilterBar({ filters, dispatch }) {
           <Text
             key={cat}
             inverse={active}
-            color={active ? 'cyan' : '#737373'}
+            color={active ? 'cyan' : '#d4d4d4'}
           >
             [{cat}]
           </Text>

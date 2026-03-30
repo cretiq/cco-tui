@@ -33,15 +33,15 @@ export function DeleteModal({ modal, state, dispatch, onDelete }) {
       <Box marginTop={1} flexDirection="column">
         <Text>{label}</Text>
         {items.length === 1 && (
-          <Text dimColor>{items[0].category} · {items[0].scopeId}</Text>
+          <Text color="#d4d4d4">{items[0].category} · {items[0].scopeId}</Text>
         )}
       </Box>
       <Box marginTop={1}>
-        <Text dimColor>This cannot be undone.</Text>
+        <Text color="#d4d4d4">This cannot be undone.</Text>
       </Box>
       <Box marginTop={1} gap={2}>
         <Text inverse={focused === 'delete'} color="red">[Delete]</Text>
-        <Text inverse={focused === 'cancel'} dimColor>[Cancel]</Text>
+        <Text inverse={focused === 'cancel'} color="#d4d4d4">[Cancel]</Text>
       </Box>
     </Box>
   );

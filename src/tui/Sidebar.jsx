@@ -12,10 +12,24 @@ const CATEGORY_COLORS = {
   hook: '#f472b6',
   plugin: '#fbbf24',
   agent: '#22d3ee',
-  rule: '#a3a3a3',
-  plan: '#a3a3a3',
-  session: '#a3a3a3',
-  config: '#a3a3a3',
+  rule: '#d4d4d4',
+  plan: '#d4d4d4',
+  session: '#d4d4d4',
+  config: '#d4d4d4',
+};
+
+const CATEGORY_ICONS = {
+  memory: '󰍉',   // nf-md-brain
+  skill: '',   // nf-cod-wand
+  mcp: '󰒍',     // nf-md-server_network
+  command: '',  // nf-cod-terminal
+  hook: '󰌹',    // nf-md-hook
+  plugin: '',  // nf-cod-plug
+  agent: '󰚩',   // nf-md-robot
+  rule: '',    // nf-cod-law
+  plan: '󰙅',    // nf-md-clipboard_text
+  session: '󰗊', // nf-md-chat
+  config: '',  // nf-cod-gear
 };
 
 export function Sidebar({ state, dispatch }) {
@@ -103,7 +117,7 @@ export function Sidebar({ state, dispatch }) {
       {globalOnly && (
         <Box>
           <Text color="#fbbf24" bold>GLOBAL ONLY </Text>
-          <Text dimColor>(g: show all)</Text>
+          <Text color="#d4d4d4">(g: show all)</Text>
         </Box>
       )}
       {flatList.map((item, i) => {
@@ -123,7 +137,7 @@ export function Sidebar({ state, dispatch }) {
                 {arrow} {item.scope.name}
               </Text>
               {!isExpanded && (
-                <Text dimColor> ({total})</Text>
+                <Text color="#d4d4d4"> ({total})</Text>
               )}
             </Box>
           );
@@ -132,9 +146,9 @@ export function Sidebar({ state, dispatch }) {
           <Box key={`${item.scope.id}-${item.category}`}>
             <Text
               inverse={selected}
-              color={CATEGORY_COLORS[item.category] || '#a3a3a3'}
+              color={CATEGORY_COLORS[item.category] || '#d4d4d4'}
             >
-              {'  '}● {item.category} ({item.count})
+              {'  '}{CATEGORY_ICONS[item.category] || '●'} {item.category} ({item.count})
             </Text>
           </Box>
         );

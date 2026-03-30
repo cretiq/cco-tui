@@ -58,7 +58,7 @@ export function SessionPreview({ sessionPath, dispatch }) {
   return (
     <Box flexDirection="column" flexGrow={1} paddingX={1}>
       <Text bold>{title}</Text>
-      <Text dimColor>{messages.length} messages</Text>
+      <Text color="#d4d4d4">{messages.length} messages</Text>
       <Box marginTop={1} flexDirection="column" flexGrow={1}>
         {visible.map((msg, i) => {
           const color = ROLE_COLORS[msg.role] || 'white';
@@ -72,7 +72,7 @@ export function SessionPreview({ sessionPath, dispatch }) {
           );
         })}
       </Box>
-      <Text dimColor>↑↓: scroll  PgUp/PgDn: page  Esc: back</Text>
+      <Text color="#d4d4d4">↑↓: scroll  PgUp/PgDn: page  Esc: back</Text>
     </Box>
   );
 }

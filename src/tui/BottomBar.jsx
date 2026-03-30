@@ -38,9 +38,9 @@ export function BottomBar({ view }) {
     <Box height={1} width="100%">
       {shortcuts.map((s, i) => (
         <React.Fragment key={s.key}>
-          {i > 0 && <Text dimColor>  </Text>}
+          {i > 0 && <Text color="#d4d4d4">  </Text>}
           <Text bold color="cyan">{s.key}</Text>
-          <Text dimColor>: {s.action}</Text>
+          <Text color="#d4d4d4">: {s.action}</Text>
         </React.Fragment>
       ))}
     </Box>
