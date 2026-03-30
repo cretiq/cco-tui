@@ -13,6 +13,7 @@ import { SecurityView } from './SecurityView.jsx';
 import { SessionPreview } from './SessionPreview.jsx';
 import { Toast } from './Toast.jsx';
 import { HelpModal } from './HelpModal.jsx';
+import { SearchInput } from './SearchInput.jsx';
 
 const SIDEBAR_WIDTH = 24;
 const DETAIL_WIDTH = 34;
@@ -127,6 +128,7 @@ export function Layout({ state, dispatch }) {
                   {state.bulk ? `Items  BULK — ${state.bulkSelected.size} selected` : 'Items'}
                 </Text>
               </Box>
+              <SearchInput search={state.search} dispatch={dispatch} isActive={state.searching} />
               <Box paddingX={1}>
                 <FilterBar filters={state.filters} dispatch={dispatch} />
               </Box>
