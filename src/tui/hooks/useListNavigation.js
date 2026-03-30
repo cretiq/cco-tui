@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
+import { KEYS } from '../keymaps.js';
 
 export function useListNavigation(items, { isActive = true, onSelect } = {}) {
   const [cursor, setCursor] = useState(0);
@@ -12,11 +13,11 @@ export function useListNavigation(items, { isActive = true, onSelect } = {}) {
   const handleInput = useCallback((input, key) => {
     if (!isActive || items.length === 0) return false;
 
-    if (key.upArrow || input === 'k') {
+    if (key.upArrow || input === KEYS.up) {
       setCursor(c => Math.max(0, c - 1));
       return true;
     }
-    if (key.downArrow || input === 'j') {
+    if (key.downArrow || input === KEYS.down) {
       setCursor(c => Math.min(items.length - 1, c + 1));
       return true;
     }

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Box, Text, useInput } from 'ink';
+import { KEYS } from './keymaps.js';
 
 const ROLE_COLORS = { human: 'blue', assistant: 'green', system: 'yellow' };
 
@@ -38,10 +39,10 @@ export function SessionPreview({ sessionPath, dispatch }) {
       dispatch({ type: 'SELECT_ITEM', payload: null });
       return;
     }
-    if (key.upArrow || input === 'k') {
+    if (key.upArrow || input === KEYS.up) {
       setScrollOffset(o => Math.max(0, o - 1));
     }
-    if (key.downArrow || input === 'j') {
+    if (key.downArrow || input === KEYS.down) {
       setScrollOffset(o => Math.min(messages.length - 1, o + 1));
     }
     if (key.pageUp) {

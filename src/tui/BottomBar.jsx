@@ -1,10 +1,11 @@
 import React from 'react';
 import { Box, Text } from 'ink';
+import { KEYS, keymapMode } from './keymaps.js';
 
+const navKeys = `${KEYS.up}/${KEYS.down}`;
 const SHORTCUTS = {
   items: [
-    { key: 'j/k', action: 'navigate' },
-    { key: '↑↓', action: 'select' },
+    { key: navKeys, action: 'navigate' },
     { key: 'm', action: 'move' },
     { key: 'd', action: 'delete' },
     { key: '/', action: 'search' },

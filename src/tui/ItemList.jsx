@@ -84,16 +84,16 @@ export function ItemList({ state, dispatch }) {
                       {checked ? '[✓] ' : '[ ] '}
                     </Text>
                   )}
-                  <Text inverse={selected} bold={selected}>
+                  <Text inverse={selected} bold={selected} color={selected ? undefined : 'white'}>
                     {'▸ '}{item.name}
                   </Text>
                   <Box flexGrow={1} />
-                  <Text dimColor>
+                  <Text color="#a3a3a3">
                     {item.size || ''}  {item.mtime ? item.mtime.slice(0, 10) : ''}
                   </Text>
                 </Box>
                 <Box marginLeft={state.bulk ? 6 : 2}>
-                  <Text dimColor color="magenta">{item.category}</Text>
+                  <Text color="#c4b5fd">{item.category}</Text>
                 </Box>
               </Box>
             );

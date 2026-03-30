@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Box, Text, useInput } from 'ink';
 import { getScopeTree } from './selectors.js';
 import { useListNavigation } from './hooks/useListNavigation.js';
+import { KEYS } from './keymaps.js';
 
 const CATEGORY_COLORS = {
   memory: '#c4b5fd',
@@ -54,8 +55,8 @@ export function Sidebar({ state, dispatch }) {
   const { cursor, setCursor, handleInput, currentItem } = useListNavigation(flatList, {
     isActive,
     onSelect: (item) => {
+      // Enter = select scope/category to filter items in main panel
       if (item.type === 'scope') {
-        toggleCollapse(item.scope.id);
         dispatch({ type: 'SET_SCOPE', payload: item.scope.id });
       } else {
         dispatch({ type: 'SET_SCOPE', payload: item.scope.id });
@@ -68,22 +69,34 @@ export function Sidebar({ state, dispatch }) {
     if (!isActive) return;
     if (handleInput(input, key)) return;
 
-    // h = collapse, l = expand (vim tree-style)
-    if (input === 'l' && currentItem?.type === 'scope') {
+    // g = collapse all except Global
+    if (input === 'g') {
+      const nonGlobal = tree.filter(s => s.type !== 'global').map(s => s.id);
+      const globalScopes = tree.filter(s => s.type === 'global').map(s => s.id);
+      setCollapsed(c => {
+        const n = new Set(nonGlobal);
+        for (const id of globalScopes) n.delete(id);
+        return n;
+      });
+      return;
+    }
+
+    // KEYS.right = expand, KEYS.left = collapse (vim tree-style)
+    if (input === KEYS.right && currentItem?.type === 'scope') {
       if (collapsed.has(currentItem.scope.id)) {
         toggleCollapse(currentItem.scope.id);
       }
-      dispatch({ type: 'SET_SCOPE', payload: currentItem.scope.id });
       return;
     }
-    if (input === 'h' && currentItem) {
-      const scopeId = currentItem.scope.id;
+    if (input === KEYS.left && currentItem) {
       if (currentItem.type === 'category') {
-        // h on category: jump to parent scope
+        // left on category: collapse parent and jump to it
+        const scopeId = currentItem.scope.id;
+        if (!collapsed.has(scopeId)) toggleCollapse(scopeId);
         const scopeIdx = flatList.findIndex(f => f.type === 'scope' && f.scope.id === scopeId);
         if (scopeIdx >= 0) setCursor(scopeIdx);
-      } else if (!collapsed.has(scopeId)) {
-        toggleCollapse(scopeId);
+      } else if (!collapsed.has(currentItem.scope.id)) {
+        toggleCollapse(currentItem.scope.id);
       }
       return;
     }
