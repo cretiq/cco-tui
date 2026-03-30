@@ -2,6 +2,10 @@ import React from 'react';
 import { Box, Text } from 'ink';
 import { useTerminalSize } from './hooks/useTerminalSize.js';
 import { BottomBar } from './BottomBar.jsx';
+import { Sidebar } from './Sidebar.jsx';
+import { FilterBar } from './FilterBar.jsx';
+import { ItemList } from './ItemList.jsx';
+import { DetailPanel } from './DetailPanel.jsx';
 
 const SIDEBAR_WIDTH = 24;
 const DETAIL_WIDTH = 34;
@@ -27,7 +31,7 @@ export function Layout({ state, dispatch }) {
               <Text bold color="cyan">Scope Tree</Text>
             </Box>
             <Box flexDirection="column" flexGrow={1} paddingX={1}>
-              <Text dimColor>Loading...</Text>
+              <Sidebar state={state} dispatch={dispatch} />
             </Box>
           </Box>
         )}
@@ -39,10 +43,15 @@ export function Layout({ state, dispatch }) {
           borderColor={focusColor('main')}
         >
           <Box paddingX={1}>
-            <Text bold color="cyan">Items</Text>
+            <Text bold color="cyan">
+              {state.bulk ? `Items  BULK — ${state.bulkSelected.size} selected` : 'Items'}
+            </Text>
+          </Box>
+          <Box paddingX={1}>
+            <FilterBar filters={state.filters} dispatch={dispatch} />
           </Box>
           <Box flexDirection="column" flexGrow={1} paddingX={1}>
-            <Text dimColor>{state.loading ? 'Scanning...' : 'No items'}</Text>
+            <ItemList state={state} dispatch={dispatch} />
           </Box>
         </Box>
 
@@ -53,12 +62,7 @@ export function Layout({ state, dispatch }) {
             borderStyle="single"
             borderColor={focusColor('detail')}
           >
-            <Box paddingX={1}>
-              <Text bold color="cyan">Detail</Text>
-            </Box>
-            <Box flexDirection="column" flexGrow={1} paddingX={1}>
-              <Text dimColor>Select an item to view details</Text>
-            </Box>
+            <DetailPanel state={state} dispatch={dispatch} />
           </Box>
         )}
       </Box>
