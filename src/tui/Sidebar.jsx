@@ -23,6 +23,7 @@ export function Sidebar({ state, dispatch }) {
   const tree = getScopeTree(state.scopes, state.items);
   const initialized = useRef(false);
   const [collapsed, setCollapsed] = useState(new Set());
+  const [globalOnly, setGlobalOnly] = useState(false);
 
   // Start with all scopes collapsed
   useEffect(() => {
@@ -41,8 +42,9 @@ export function Sidebar({ state, dispatch }) {
     });
   };
 
+  const visibleTree = globalOnly ? tree.filter(s => s.type === 'global') : tree;
   const flatList = [];
-  for (const scope of tree) {
+  for (const scope of visibleTree) {
     flatList.push({ type: 'scope', scope });
     if (!collapsed.has(scope.id)) {
       const cats = Object.entries(scope.categoryCounts).sort((a, b) => b[1] - a[1]);
@@ -69,15 +71,9 @@ export function Sidebar({ state, dispatch }) {
     if (!isActive) return;
     if (handleInput(input, key)) return;
 
-    // g = collapse all except Global
+    // g = toggle: show only Global scopes / show all
     if (input === 'g') {
-      const nonGlobal = tree.filter(s => s.type !== 'global').map(s => s.id);
-      const globalScopes = tree.filter(s => s.type === 'global').map(s => s.id);
-      setCollapsed(c => {
-        const n = new Set(nonGlobal);
-        for (const id of globalScopes) n.delete(id);
-        return n;
-      });
+      setGlobalOnly(v => !v);
       return;
     }
 
@@ -104,6 +100,12 @@ export function Sidebar({ state, dispatch }) {
 
   return (
     <Box flexDirection="column" flexGrow={1}>
+      {globalOnly && (
+        <Box>
+          <Text color="#fbbf24" bold>GLOBAL ONLY </Text>
+          <Text dimColor>(g: show all)</Text>
+        </Box>
+      )}
       {flatList.map((item, i) => {
         const selected = i === cursor && isActive;
         const isSelectedScope = state.selectedScopeId === item.scope?.id;

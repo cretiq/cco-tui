@@ -15,7 +15,7 @@ import { Toast } from './Toast.jsx';
 import { HelpModal } from './HelpModal.jsx';
 import { SearchInput } from './SearchInput.jsx';
 
-const SIDEBAR_WIDTH = 24;
+const SIDEBAR_WIDTH = 30;
 const DETAIL_WIDTH = 34;
 
 export function Layout({ state, dispatch }) {
