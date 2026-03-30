@@ -68,7 +68,7 @@ export function SecurityView({ state, dispatch }) {
   return (
     <Box flexDirection="column" flexGrow={1} paddingX={1}>
       <Box gap={2}>
-        <Text dimColor>Scanned {report?.totalTools || 0} tools from {report?.totalServers || 0} servers</Text>
+        <Text color="#a3a3a3">Scanned {report?.totalTools || 0} tools from {report?.totalServers || 0} servers</Text>
       </Box>
       <Box gap={1} marginTop={1}>
         <Text inverse={!severityFilter} dimColor={!!severityFilter}>[All]</Text>
@@ -94,15 +94,15 @@ export function SecurityView({ state, dispatch }) {
                   <Text color={SEVERITY_COLORS[f.severity]}>
                     {SEVERITY_ICONS[f.severity]}{' '}
                   </Text>
-                  <Text inverse={selected} bold={selected}>
+                  <Text inverse={selected} bold={selected} color={selected ? undefined : 'white'}>
                     {f.threat}
                   </Text>
                 </Box>
                 <Box marginLeft={4}>
-                  <Text dimColor>{f.location}</Text>
+                  <Text color="#a3a3a3">{f.location}</Text>
                 </Box>
                 <Box marginLeft={4}>
-                  <Text dimColor>{f.snippet?.slice(0, 60)}</Text>
+                  <Text color="#737373">{f.snippet?.slice(0, 60)}</Text>
                 </Box>
               </Box>
             );
