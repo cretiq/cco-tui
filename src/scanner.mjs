@@ -159,7 +159,10 @@ async function getSettingsOverrides() {
  * at each level by consuming segments from the encoded name.
  */
 async function resolveEncodedProjectPath(encoded) {
-  const segments = encoded.replace(/^-/, "").split("-");
+  // Claude Code encodes dotfiles: .foo → -foo with leading dash after separator,
+  // producing -- in the encoded string. Pre-process to restore dots.
+  const normalized = encoded.replace(/^-/, "").replace(/--/g, "-.");
+  const segments = normalized.split("-");
   let rootPath = "/";
   let startIdx = 0;
 
@@ -697,6 +700,7 @@ async function scanHooks(scope) {
     try {
       const settings = JSON.parse(content);
       const hooks = settings.hooks || {};
+      let hookIdx = 0;
       for (const [event, hookArray] of Object.entries(hooks)) {
         for (const hookGroup of hookArray) {
           const cmds = hookGroup.hooks || [];
@@ -712,7 +716,7 @@ async function scanHooks(scope) {
               sizeBytes: 0,
               mtime: "",
               ctime: "",
-              path: source.path,
+              path: `${source.path}#hook:${event}:${hookIdx++}`,
               locked: true,
             });
           }

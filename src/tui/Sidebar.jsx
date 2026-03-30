@@ -1,45 +1,80 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Box, Text, useInput } from 'ink';
 import { getScopeTree } from './selectors.js';
 import { useListNavigation } from './hooks/useListNavigation.js';
+import { useTerminalSize } from './hooks/useTerminalSize.js';
 import { KEYS } from './keymaps.js';
+import { CATEGORY_COLORS, CATEGORY_ICONS } from './categoryMeta.js';
 
-const CATEGORY_COLORS = {
-  memory: '#c4b5fd',
-  skill: '#fb923c',
-  mcp: '#34d399',
-  command: '#60a5fa',
-  hook: '#f472b6',
-  plugin: '#fbbf24',
-  agent: '#22d3ee',
-  rule: '#d4d4d4',
-  plan: '#d4d4d4',
-  session: '#d4d4d4',
-  config: '#d4d4d4',
-};
+const SCOPE_GROUPS = [
+  { id: 'phoenix', name: 'Phoenix', match: /^(p[1-5]|m5)$/ },
+  { id: 'claude', name: 'Claude', match: /^(\.claude|\.claude_phoenix|claude-scratch|claude-code-organizer|cco-tui)$/ },
+];
 
-const CATEGORY_ICONS = {
-  memory: '',    // nf-cod-lightbulb
-  skill: '',    // nf-cod-wand
-  mcp: '',     // nf-cod-server
-  command: '',   // nf-cod-terminal
-  hook: '',    // nf-cod-symbol_event
-  plugin: '',   // nf-cod-extensions
-  agent: '',    // nf-cod-hubot
-  rule: '',    // nf-cod-shield
-  plan: '',    // nf-cod-list_ordered
-  session: '',   // nf-cod-history
-  config: '',   // nf-cod-gear
-};
+function groupChildScopes(children) {
+  const groups = [];
+  for (const g of SCOPE_GROUPS) {
+    const members = children.filter(s => g.match.test(s.name));
+    if (members.length > 0) groups.push({ ...g, members });
+  }
+  const ungrouped = children.filter(s => !SCOPE_GROUPS.some(g => g.match.test(s.name)));
+  if (ungrouped.length > 0) {
+    groups.push({ id: '_other', name: 'Projects', members: ungrouped });
+  }
+  return groups;
+}
+
+function toggleIn(setter, id) {
+  setter(s => {
+    const n = new Set(s);
+    if (n.has(id)) n.delete(id); else n.add(id);
+    return n;
+  });
+}
+
+function buildFlatList(visibleTree, collapsed, collapsedGroups) {
+  const list = [];
+  const global = visibleTree.filter(s => s.type === 'global');
+  const projects = visibleTree.filter(s => s.type !== 'global');
+
+  for (const scope of global) {
+    pushScope(list, scope, collapsed, 0);
+  }
+
+  if (projects.length > 0) {
+    const groups = groupChildScopes(projects);
+    for (const group of groups) {
+      list.push({ type: 'group', group });
+      if (collapsedGroups.has(group.id)) continue;
+      for (const scope of group.members) {
+        pushScope(list, scope, collapsed, 1);
+      }
+    }
+  }
+
+  return list;
+}
+
+function pushScope(list, scope, collapsed, indent) {
+  list.push({ type: 'scope', scope, indent });
+  if (collapsed.has(scope.id)) return;
+  const cats = Object.entries(scope.categoryCounts).sort((a, b) => b[1] - a[1]);
+  for (const [cat, count] of cats) {
+    list.push({ type: 'category', scope, category: cat, count, indent });
+  }
+}
 
 export function Sidebar({ state, dispatch }) {
   const isActive = state.focus === 'sidebar';
-  const tree = getScopeTree(state.scopes, state.items);
+  const tree = useMemo(
+    () => getScopeTree(state.scopes, state.items),
+    [state.scopes, state.items],
+  );
   const initialized = useRef(false);
   const [collapsed, setCollapsed] = useState(new Set());
+  const [collapsedGroups, setCollapsedGroups] = useState(new Set());
   const [globalOnly, setGlobalOnly] = useState(false);
 
-  // Start with all scopes collapsed
   useEffect(() => {
     if (tree.length > 0 && !initialized.current) {
       setCollapsed(new Set(tree.map(s => s.id)));
@@ -47,32 +82,22 @@ export function Sidebar({ state, dispatch }) {
     }
   }, [tree.length]);
 
-  const toggleCollapse = (scopeId) => {
-    setCollapsed(c => {
-      const n = new Set(c);
-      if (n.has(scopeId)) n.delete(scopeId);
-      else n.add(scopeId);
-      return n;
-    });
-  };
+  const visibleTree = useMemo(
+    () => globalOnly ? tree.filter(s => s.type === 'global') : tree,
+    [tree, globalOnly],
+  );
 
-  const visibleTree = globalOnly ? tree.filter(s => s.type === 'global') : tree;
-  const flatList = [];
-  for (const scope of visibleTree) {
-    flatList.push({ type: 'scope', scope });
-    if (!collapsed.has(scope.id)) {
-      const cats = Object.entries(scope.categoryCounts).sort((a, b) => b[1] - a[1]);
-      for (const [cat, count] of cats) {
-        flatList.push({ type: 'category', scope, category: cat, count });
-      }
-    }
-  }
+  const flatList = useMemo(
+    () => buildFlatList(visibleTree, collapsed, collapsedGroups),
+    [visibleTree, collapsed, collapsedGroups],
+  );
 
   const { cursor, setCursor, handleInput, currentItem } = useListNavigation(flatList, {
     isActive,
     onSelect: (item) => {
-      // Enter = select scope/category to filter items in main panel
-      if (item.type === 'scope') {
+      if (item.type === 'group') {
+        toggleIn(setCollapsedGroups, item.group.id);
+      } else if (item.type === 'scope') {
         dispatch({ type: 'SET_SCOPE', payload: item.scope.id });
       } else {
         dispatch({ type: 'SET_SCOPE', payload: item.scope.id });
@@ -85,32 +110,57 @@ export function Sidebar({ state, dispatch }) {
     if (!isActive) return;
     if (handleInput(input, key)) return;
 
-    // g = toggle: show only Global scopes / show all
     if (input === 'g') {
       setGlobalOnly(v => !v);
       return;
     }
 
-    // KEYS.right = expand, KEYS.left = collapse (vim tree-style)
-    if (input === KEYS.right && currentItem?.type === 'scope') {
-      if (collapsed.has(currentItem.scope.id)) {
-        toggleCollapse(currentItem.scope.id);
+    if (input === KEYS.right) {
+      if (currentItem?.type === 'group' && collapsedGroups.has(currentItem.group.id)) {
+        toggleIn(setCollapsedGroups, currentItem.group.id);
+      } else if (currentItem?.type === 'scope' && collapsed.has(currentItem.scope.id)) {
+        toggleIn(setCollapsed, currentItem.scope.id);
       }
       return;
     }
     if (input === KEYS.left && currentItem) {
       if (currentItem.type === 'category') {
-        // left on category: collapse parent and jump to it
-        const scopeId = currentItem.scope.id;
-        if (!collapsed.has(scopeId)) toggleCollapse(scopeId);
-        const scopeIdx = flatList.findIndex(f => f.type === 'scope' && f.scope.id === scopeId);
+        // Jump to parent scope
+        const scopeIdx = flatList.findIndex(f => f.type === 'scope' && f.scope.id === currentItem.scope.id);
         if (scopeIdx >= 0) setCursor(scopeIdx);
-      } else if (!collapsed.has(currentItem.scope.id)) {
-        toggleCollapse(currentItem.scope.id);
+      } else if (currentItem.type === 'scope' && !collapsed.has(currentItem.scope.id)) {
+        // Expanded scope: collapse it
+        toggleIn(setCollapsed, currentItem.scope.id);
+      } else if (currentItem.type === 'scope' && currentItem.indent) {
+        // Collapsed child scope: jump to parent group
+        const groupIdx = flatList.findLastIndex((f, fi) => f.type === 'group' && fi < cursor);
+        if (groupIdx >= 0) setCursor(groupIdx);
+      } else if (currentItem.type === 'group' && !collapsedGroups.has(currentItem.group.id)) {
+        // Expanded group: collapse it
+        toggleIn(setCollapsedGroups, currentItem.group.id);
       }
       return;
     }
   });
+
+  const { rows } = useTerminalSize();
+  const viewHeight = rows - 5;
+  const [scrollOffset, setScrollOffset] = useState(0);
+
+  useEffect(() => {
+    if (flatList.length <= viewHeight) { setScrollOffset(0); return; }
+    setScrollOffset(prev => {
+      const pad = 2;
+      let next = prev;
+      if (cursor >= next + viewHeight - pad) next = cursor - viewHeight + pad + 1;
+      if (cursor < next + pad) next = Math.max(0, cursor - pad);
+      return Math.max(0, Math.min(next, flatList.length - viewHeight));
+    });
+  }, [cursor, flatList.length, viewHeight]);
+
+  const visibleSlice = flatList.length <= viewHeight
+    ? flatList.map((item, i) => ({ item, globalIdx: i }))
+    : flatList.slice(scrollOffset, scrollOffset + viewHeight).map((item, i) => ({ item, globalIdx: scrollOffset + i }));
 
   return (
     <Box flexDirection="column" flexGrow={1}>
@@ -120,15 +170,29 @@ export function Sidebar({ state, dispatch }) {
           <Text color="#d4d4d4">(g: show all)</Text>
         </Box>
       )}
-      {flatList.map((item, i) => {
+      {visibleSlice.map(({ item, globalIdx: i }) => {
         const selected = i === cursor && isActive;
-        const isSelectedScope = state.selectedScopeId === item.scope?.id;
+        const ml = item.indent || 0;
+        if (item.type === 'group') {
+          const isExpanded = !collapsedGroups.has(item.group.id);
+          const arrow = isExpanded ? '\uEB6E' : '\uEB70';
+          const total = item.group.members.reduce((s, m) => s + (m.totalItems || 0), 0);
+          return (
+            <Box key={`grp-${item.group.id}`} marginLeft={ml}>
+              <Text inverse={selected} bold color={selected ? undefined : '#fbbf24'}>
+                {arrow} {item.group.name}
+              </Text>
+              {!isExpanded && <Text color="#d4d4d4"> ({total})</Text>}
+            </Box>
+          );
+        }
         if (item.type === 'scope') {
+          const isSelectedScope = state.selectedScopeId === item.scope.id;
           const isExpanded = !collapsed.has(item.scope.id);
-          const arrow = isExpanded ? '▼' : '▶';
+          const arrow = isExpanded ? '\uEB6E' : '\uEB70';
           const total = item.scope.totalItems || 0;
           return (
-            <Box key={item.scope.id}>
+            <Box key={`scope-${item.scope.id}`} marginLeft={ml}>
               <Text
                 inverse={selected}
                 bold={isSelectedScope}
@@ -136,19 +200,19 @@ export function Sidebar({ state, dispatch }) {
               >
                 {arrow} {item.scope.name}
               </Text>
-              {!isExpanded && (
-                <Text color="#d4d4d4"> ({total})</Text>
-              )}
+              {!isExpanded && <Text color="#d4d4d4"> ({total})</Text>}
             </Box>
           );
         }
+        const isFiltered = state.filters.includes(item.category);
         return (
-          <Box key={`${item.scope.id}-${item.category}`}>
+          <Box key={`${item.scope.id}-${item.category}`} marginLeft={ml}>
             <Text
               inverse={selected}
+              bold={isFiltered}
               color={CATEGORY_COLORS[item.category] || '#d4d4d4'}
             >
-              {'  '}{CATEGORY_ICONS[item.category] || '●'} {item.category} ({item.count})
+              {isFiltered ? ' \u25B8' : '  '}{CATEGORY_ICONS[item.category] || '\u25CF'} {item.category} ({item.count})
             </Text>
           </Box>
         );

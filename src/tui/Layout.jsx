@@ -15,7 +15,7 @@ import { Toast } from './Toast.jsx';
 import { HelpModal } from './HelpModal.jsx';
 import { SearchInput } from './SearchInput.jsx';
 
-const SIDEBAR_WIDTH = 30;
+const SIDEBAR_WIDTH = 38;
 const DETAIL_WIDTH = 34;
 
 export function Layout({ state, dispatch }) {
@@ -23,7 +23,7 @@ export function Layout({ state, dispatch }) {
   const showDetail = columns >= 100;
   const showSidebar = columns >= 60;
 
-  const focusColor = (panel) => state.focus === panel ? 'cyan' : 'gray';
+  const focusColor = (panel) => state.focus === panel ? '#86efac' : 'gray';
 
   const handleMove = async (paths, destScopeId) => {
     const { moveItem } = await import('../mover.mjs');
@@ -75,7 +75,7 @@ export function Layout({ state, dispatch }) {
           <Box
             width={SIDEBAR_WIDTH}
             flexDirection="column"
-            borderStyle="single"
+            borderStyle="round"
             borderColor={focusColor('sidebar')}
           >
             <Box paddingX={1}>
@@ -90,7 +90,7 @@ export function Layout({ state, dispatch }) {
         <Box
           flexGrow={1}
           flexDirection="column"
-          borderStyle="single"
+          borderStyle="round"
           borderColor={focusColor('main')}
         >
           {state.modal?.type === 'help' ? (
@@ -130,7 +130,12 @@ export function Layout({ state, dispatch }) {
               </Box>
               <SearchInput search={state.search} dispatch={dispatch} isActive={state.searching} />
               <Box paddingX={1}>
-                <FilterBar filters={state.filters} dispatch={dispatch} />
+                <FilterBar
+                  filters={state.filters}
+                  dispatch={dispatch}
+                  isActive={state.focus === 'main' && state.filterFocused}
+                  filterCursor={state.filterCursor}
+                />
               </Box>
               <Box flexDirection="column" flexGrow={1} paddingX={1}>
                 <ItemList state={state} dispatch={dispatch} />
@@ -143,7 +148,7 @@ export function Layout({ state, dispatch }) {
           <Box
             width={DETAIL_WIDTH}
             flexDirection="column"
-            borderStyle="single"
+            borderStyle="round"
             borderColor={focusColor('detail')}
           >
             <DetailPanel state={state} dispatch={dispatch} />

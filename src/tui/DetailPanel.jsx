@@ -9,7 +9,8 @@ export function DetailPanel({ state, dispatch }) {
 
   useEffect(() => {
     if (!item) { setPreview(''); return; }
-    readFile(item.path, 'utf8')
+    const filePath = item.path.split('#')[0];
+    readFile(filePath, 'utf8')
       .then(content => setPreview(content.slice(0, 2000)))
       .catch(() => setPreview('[Unable to read file]'));
   }, [item?.path]);

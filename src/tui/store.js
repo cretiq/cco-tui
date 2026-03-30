@@ -8,6 +8,8 @@ export const initialState = {
   filters: [],
   search: '',
   focus: 'sidebar',
+  filterFocused: false,
+  filterCursor: 0,
   bulk: false,
   bulkSelected: new Set(),
   modal: null,
@@ -48,7 +50,13 @@ export function reducer(state, action) {
       return { ...state, search: action.payload };
 
     case 'SET_FOCUS':
-      return { ...state, focus: action.payload };
+      return { ...state, focus: action.payload, filterFocused: false };
+
+    case 'SET_FILTER_FOCUSED':
+      return { ...state, filterFocused: action.payload };
+
+    case 'SET_FILTER_CURSOR':
+      return { ...state, filterCursor: action.payload };
 
     case 'TOGGLE_BULK':
       return { ...state, bulk: !state.bulk, bulkSelected: new Set() };

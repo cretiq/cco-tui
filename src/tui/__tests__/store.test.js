@@ -13,6 +13,8 @@ describe('reducer', () => {
       filters: [],
       search: '',
       focus: 'sidebar',
+      filterFocused: false,
+      filterCursor: 0,
       bulk: false,
       bulkSelected: new Set(),
       modal: null,

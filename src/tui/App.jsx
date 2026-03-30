@@ -38,6 +38,7 @@ export default function App({ scanDir, scanFn }) {
       return;
     }
     if (key.escape) {
+      if (state.filterFocused) { dispatch({ type: 'SET_FILTER_FOCUSED', payload: false }); return; }
       if (state.searching) { dispatch({ type: 'STOP_SEARCH' }); return; }
       if (state.view !== 'items') { dispatch({ type: 'SET_VIEW', payload: 'items' }); return; }
       if (state.bulk) { dispatch({ type: 'TOGGLE_BULK' }); return; }
