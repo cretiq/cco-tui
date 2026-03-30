@@ -94,7 +94,7 @@ export function SecurityView({ state, dispatch }) {
                   <Text color={SEVERITY_COLORS[f.severity]}>
                     {SEVERITY_ICONS[f.severity]}{' '}
                   </Text>
-                  <Text inverse={selected} bold={selected} color={selected ? undefined : 'white'}>
+                  <Text inverse={selected} bold={selected} color={selected ? undefined : '#e5e5e5'}>
                     {f.threat}
                   </Text>
                 </Box>

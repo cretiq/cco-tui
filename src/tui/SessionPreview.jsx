@@ -61,7 +61,7 @@ export function SessionPreview({ sessionPath, dispatch }) {
       <Text color="#d4d4d4">{messages.length} messages</Text>
       <Box marginTop={1} flexDirection="column" flexGrow={1}>
         {visible.map((msg, i) => {
-          const color = ROLE_COLORS[msg.role] || 'white';
+          const color = ROLE_COLORS[msg.role] || '#e5e5e5';
           return (
             <Box key={scrollOffset + i} flexDirection="column" marginBottom={1}>
               <Text bold color={color}>┃ {msg.role.charAt(0).toUpperCase() + msg.role.slice(1)}</Text>

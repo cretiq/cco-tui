@@ -84,7 +84,7 @@ export function ItemList({ state, dispatch }) {
                       {checked ? '[✓] ' : '[ ] '}
                     </Text>
                   )}
-                  <Text inverse={selected} bold={selected} color={selected ? undefined : 'white'}>
+                  <Text inverse={selected} bold={selected} color={selected ? undefined : '#e5e5e5'}>
                     {'▸ '}{item.name}
                   </Text>
                   <Box flexGrow={1} />

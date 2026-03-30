@@ -19,17 +19,17 @@ const CATEGORY_COLORS = {
 };
 
 const CATEGORY_ICONS = {
-  memory: '󰍉',   // nf-md-brain
-  skill: '',   // nf-cod-wand
-  mcp: '󰒍',     // nf-md-server_network
-  command: '',  // nf-cod-terminal
-  hook: '󰌹',    // nf-md-hook
-  plugin: '',  // nf-cod-plug
-  agent: '󰚩',   // nf-md-robot
-  rule: '',    // nf-cod-law
-  plan: '󰙅',    // nf-md-clipboard_text
-  session: '󰗊', // nf-md-chat
-  config: '',  // nf-cod-gear
+  memory: '●',
+  skill: '●',
+  mcp: '●',
+  command: '●',
+  hook: '●',
+  plugin: '●',
+  agent: '●',
+  rule: '●',
+  plan: '●',
+  session: '●',
+  config: '●',
 };
 
 export function Sidebar({ state, dispatch }) {
@@ -132,7 +132,7 @@ export function Sidebar({ state, dispatch }) {
               <Text
                 inverse={selected}
                 bold={isSelectedScope}
-                color={selected ? undefined : (isSelectedScope ? 'white' : '#d4d4d4')}
+                color={selected ? undefined : (isSelectedScope ? '#e5e5e5' : '#d4d4d4')}
               >
                 {arrow} {item.scope.name}
               </Text>
